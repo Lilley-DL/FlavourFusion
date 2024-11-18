@@ -6,11 +6,13 @@ import psycopg2
 app = Flask(__name__)
 
 #database thingssssss
-DATABASE_URL = os.environ.get('DATABASE_URL')
 
 #should allow for development using a dev database
 if app.debug:
     DATABASE_URL = os.environ.get('DEV_DATABASE_URL')
+else:
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+
 
 
 def get_db_connection():
@@ -18,7 +20,15 @@ def get_db_connection():
     return conn
 
 #routes 
-
+@app.route("/")
+def index():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM  users")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template("index.html",users=rows)
 
 ##for render to run 
 if __name__ == "__main__":
