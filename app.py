@@ -6,7 +6,9 @@ from wtforms.validators import DataRequired,Email
 
 from dotenv import load_dotenv
 import csv , json, os, hashlib
-import psycopg2
+
+from Database import get_db_connection,Database
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('CSRF_SECRET_KEY')
@@ -26,9 +28,6 @@ class LoginForm(FlaskForm):
     submit = SubmitField("Submit")
 
 
-
-
-
 #database thingssssss
 #should allow for development using a dev database
 if app.debug:
@@ -36,17 +35,13 @@ if app.debug:
 else:
     DATABASE_URL = os.environ.get('DATABASE_URL')
 
-
-def get_db_connection():
-    conn = psycopg2.connect(DATABASE_URL)
-    return conn
-
-
+#database object instance 
+db = Database(DATABASE_URL)
 
 #routes 
 @app.route("/")
 def index():
-    conn = get_db_connection()
+    conn = db.getConnection()
     cur = conn.cursor()
     cur.execute("SELECT * FROM  users")
     rows = cur.fetchall()
@@ -75,31 +70,26 @@ def signup():
         password = form.password.data # might need to hash it here
         form.password.data = ''
 
-        #hash the password
-        #hash the password 
-        hashed = hashlib.sha256(password.encode())
+        #password salt
+        salt = os.urandom(32)
 
-        #get db connection 
-        conn = get_db_connection()
-        cur = conn.cursor()
-        #check availability of username and email
-        
-        ##if available then try to entr them into the database
-        try:
-            sql = "INSERT INTO users (username,email,hash) VALUES (%s,%s,%s)"
-            values = (username,email,hashed.hexdigest(),)
-            cur.execute(sql,values)
-            #close DB conection 
-            conn.commit()
-            cur.close()
-            conn.close()
-        except (Exception, psycopg2.Error) as error:
-            app.logger.error("Error while inserting data",error)
+        hashed = hashlib.pbkdf2_hmac('sha256',password.encode('utf-8'),salt,1000) #iterations was 100,000 but i chose 1000
 
-        return redirect('/login')
+        sql = "INSERT INTO users (username,email,hash,salt) VALUES (%s,%s,%s,%s)"
+        # values = (username,email,hashed,salt,)
+        values = (username,email,hashed,salt)
+
+        result, message = db.insert(sql,values)
+
+        if result:
+            return redirect('/login')
+        else:
+            return redirect(url_for('signup',errors=f'{message}'))
 
     if request.method == 'GET':
-        return render_template("signup.html",username=username,email=email,password=password,form=form)
+        #look for error messag in the url 
+        errors = request.args.get('errors')
+        return render_template("signup.html",username=username,email=email,password=password,form=form,errors=errors)
 
 ##LOGIN
 

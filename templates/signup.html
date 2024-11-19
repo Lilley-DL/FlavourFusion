@@ -5,6 +5,9 @@
 
 {% block content %}
 <h1>Signup for an account</h1>
+{% if errors %}
+    {{errors}}
+{% endif %}
 <br>
 <form action="/signup" method="post">
     {{form.hidden_tag()}}
