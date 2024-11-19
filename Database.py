@@ -30,7 +30,6 @@ class Database:
         try:
             cur.execute(query)
             rows = cur.fetchall()
-            #close DB conection 
             conn.commit()
             cur.close()
             conn.close()
@@ -42,7 +41,6 @@ class Database:
     def get(self,query:str,values:tuple = None):
         conn = self.getConnection()
         cur = conn.cursor()
-
         try:
             if values:
                 cur.execute(query,values)

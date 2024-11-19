@@ -5,7 +5,7 @@ from wtforms import StringField,EmailField,SubmitField,PasswordField
 from wtforms.validators import DataRequired,Email
 import flask_login
 from dotenv import load_dotenv
-import csv , json, os, hashlib
+import csv , json, os, hashlib, binascii
 
 from Database import get_db_connection,Database
 
@@ -27,20 +27,15 @@ else:
 #database object instance 
 db = Database(DATABASE_URL)
 
-
-
-
-#
 class SignupForm(FlaskForm):
     username = StringField('Username: ',validators=[DataRequired()])
     email = EmailField('Email: ',validators=[DataRequired()])
     password = PasswordField('Password: ',validators=[DataRequired()])
     submit = SubmitField("Submit")
 
-
 class LoginForm(FlaskForm):
     username = StringField('Username: ',validators=[DataRequired()])
-    email = EmailField('Email: ',validators=[Email()])
+    email = EmailField('Email: ',validators=[DataRequired()])
     password = PasswordField('Password: ',validators=[DataRequired()])
     submit = SubmitField("Submit")
 
@@ -50,9 +45,6 @@ class User(flask_login.UserMixin):
 
 @login_manager.user_loader
 def user_loader(id):
-    #conn = db.getConnection()
-    # cur = conn.cursor()
-
     sql = "SELECT EXISTS(SELECT 1 FROM users WHERE user_id = %s)"
     values = (id,)
     result,rows = db.get(sql,values)
@@ -143,9 +135,11 @@ def signup():
 
         hashed = hashlib.pbkdf2_hmac('sha256',password.encode('utf-8'),salt,1000) #iterations was 100,000 but i chose 1000
 
+        salt_hex = binascii.hexlify(salt).decode('utf-8')
+
         sql = "INSERT INTO users (username,email,hash,salt) VALUES (%s,%s,%s,%s)"
         # values = (username,email,hashed,salt,)
-        values = (username,email,hashed,salt)
+        values = (username,email,binascii.hexlify(hashed).decode('utf-8'),salt_hex)
 
         result, message = db.insert(sql,values)
 
@@ -169,7 +163,7 @@ def login():
 
     form = LoginForm()
 
-    if form.validate_on_submit():
+    if form.validate_on_submit(): ##POST
         username = form.username.data
         form.username.data = ''
 
@@ -179,10 +173,35 @@ def login():
         password = form.password.data # might need to hash it here
         form.password.data = ''
 
+        #check for the presence of the user in the db 
+        result,userInfo = db.get("SELECT user_id,username,email,hash,salt FROM users WHERE email = %s",values=(email,))
+        app.logger.info(f"USER LOGIN RESULT:{result} , message: {userInfo}")
+        if userInfo:
+            app.logger.info(f"DATA IN USER INFO")
+        else:
+            #redirect  with message of no user 
+            app.logger.info(f"NO DATA IN USER INFO")
+            return redirect(url_for('login',errors=f'No user profile'))
+
+        #hash the password
+        salt = binascii.unhexlify(userInfo[0]['salt'])
+        hashed = hashlib.pbkdf2_hmac('sha256',password.encode('utf-8'),salt,1000)
+        hashed_hex = binascii.hexlify(hashed)
+
+        app.logger.info(f" DB hash = {userInfo[0]['hash']}  :: input hex {hashed_hex.decode('utf-8')}")
+
+        if hashed_hex.decode('utf-8') == userInfo[0]['hash']:
+            app.logger.info("USER LOGGED IN")
+        else:
+            app.logger.info("USER NOT LOGGED IN")
 
 
-
-    return render_template("login.html",form=form)
+        return redirect(url_for('index'))
+    
+    if request.method == 'GET':
+        #look for error messag in the url 
+        errors = request.args.get('errors')
+        return render_template("login.html",form=form,errors=errors)
 
 ##for render to run 
 if __name__ == "__main__":

@@ -6,7 +6,11 @@
 {% block content %}
 <h1>login </h1>
 <br>
-<form action="/signup" method="post">
+{% if errors %}
+    {{errors}}
+{% endif %}
+<br>
+<form action="/login" method="post">
     {{form.hidden_tag()}}
     {{form.username.label}} {{form.username()}}
     <br>
