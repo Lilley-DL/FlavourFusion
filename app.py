@@ -1,4 +1,4 @@
-from flask import Flask,render_template,url_for,request,jsonify,redirect
+from flask import Flask,render_template,url_for,request,jsonify,redirect,flash
 
 from flask_wtf import FlaskForm
 from wtforms import StringField,EmailField,SubmitField,PasswordField
@@ -49,13 +49,13 @@ def user_loader(id):
     values = (id,)
     result,rows = db.get(sql,values)
     user_exists = rows
+    
+    if user_exists[0]['exists'] == True:
 
-    if user_exists[0] == 1:
-
-        sql = "SELECT * FROM users WHERE user_id = ?"
+        sql = "SELECT * FROM users WHERE user_id = %s"
         values = (id,)
         result,rows = db.get(sql,values)
-        info = rows
+        info = rows[0] 
 
         user = User()
         user.id = info['user_id']
@@ -76,12 +76,12 @@ def request_loader(request):
     result,rows = db.get(sql,values)
     user_exists = rows
 
-    if user_exists[0] == 1:
+    if user_exists[0]['exists'] == True:
 
-        sql = "SELECT * FROM users WHERE email = ?"
+        sql = "SELECT * FROM users WHERE email = %s"
         values = (email,)
         result,rows = db.get(sql,values)
-        info = rows
+        info = rows[0] 
 
         user = User()
         user.id = info['user_id']
@@ -95,19 +95,7 @@ def request_loader(request):
 #                               ROUTES 
 @app.route("/")
 def index():
-    
-    result,rows = db.get("SELECT * FROM  users")
-
-    #testing 
-    sql = "SELECT username,email FROM users WHERE user_id = %s"
-    values = (6,)
-    result,rows2 = db.get(sql,values)
-    email = rows2[0]["email"]
-    app.logger.info(f"ROWS {email}")
-
-    #end of testing 
-
-    return render_template("index.html",users=rows)
+    return render_template("index.html")
 
 ##signup route 
 
@@ -181,7 +169,8 @@ def login():
         else:
             #redirect  with message of no user 
             app.logger.info(f"NO DATA IN USER INFO")
-            return redirect(url_for('login',errors=f'No user profile'))
+            flash("No user profile")
+            return redirect(url_for('login'))
 
         #hash the password
         salt = binascii.unhexlify(userInfo[0]['salt'])
@@ -192,16 +181,56 @@ def login():
 
         if hashed_hex.decode('utf-8') == userInfo[0]['hash']:
             app.logger.info("USER LOGGED IN")
+            user = User()
+            user.id = userInfo[0]['user_id']
+            user.username = userInfo[0]['username']
+            user.email = userInfo[0]['email']
+
+            flask_login.login_user(user)
+            return redirect('/profile')
+
         else:
             app.logger.info("USER NOT LOGGED IN")
-
-
-        return redirect(url_for('index'))
+            return render_template('login.html', form=form, errors="something went wrong. try again")
+        
+    #ther is no else for the above valid form check so may need that in future 
     
     if request.method == 'GET':
         #look for error messag in the url 
         errors = request.args.get('errors')
         return render_template("login.html",form=form,errors=errors)
+
+
+#add login required decorator 
+@app.route("/profile",methods=['GET','POST'])
+@flask_login.login_required
+def profile():
+    #get the logged in user 
+    currentUser = None
+
+    if flask_login.current_user.is_authenticated:
+        currentUser = flask_login.current_user
+
+    return render_template("profile.html",user=currentUser)
+
+
+@app.route("/logout")
+def logout():
+    flask_login.logout_user()
+    return redirect(url_for('index'))
+
+@login_manager.unauthorized_handler
+def unauthorized_handler():
+    #return "Unauthorized", 401
+    return redirect(url_for('index'))
+
+
+
+
+
+
+
+
 
 ##for render to run 
 if __name__ == "__main__":
