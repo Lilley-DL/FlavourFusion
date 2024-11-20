@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}
+    Recipes
+{% endblock title %}
+
+{% if errors %}
+    {{errors}}
+{% endif %}
+
+{% block content %}
+
+    <div>
+        <form action="">
+            <label for="recipeName">Name:</label>
+            <input type="text" name="reciepName">
+        </form>
+    </div>
+    <div>
+        this is where the recipes will be shown 
+    </div>
+
+{% endblock  %}
+
+{% block scripts %}
+    
+{% endblock scripts %}

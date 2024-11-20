@@ -8,10 +8,9 @@
 {% endif %}
 
 {% block content %}
-<h1>User profile</h1>
-<br>
-{% if user %}
-    <h2>Hello {{user.username}}</h2>
+{% if current_user.is_authenticated %}
+    <h1>Welcome {{current_user.username}}</h1>
+    
 {% endif %}
 
 

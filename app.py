@@ -214,6 +214,18 @@ def profile():
     return render_template("profile.html",user=currentUser)
 
 
+@app.route("/recipes",methods=['GET'])
+def recipes():
+    return render_template("recipes.html")
+
+@app.route("/recipes/search/<name>")
+def reciepSearch(name):
+    #search the db for the name given 
+    #return it if its is found 
+    #flash or return a message if it is not
+    pass
+
+
 @app.route("/logout")
 def logout():
     flask_login.logout_user()

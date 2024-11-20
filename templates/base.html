@@ -11,9 +11,14 @@
 <div id="top-nav">
 
     <a href="{{url_for('index')}}">Home</a>
-    <a href="{{url_for('login')}}">Login</a>
-    <a href="{{url_for('signup')}}">Signup</a>
-    <a href="{{url_for('logout')}}">Logout</a>
+    <a href="{{url_for('recipes')}}">Recipes</a>
+    {% if current_user.is_authenticated %}
+        <a href="{{url_for('profile')}}">Profile</a>        
+        <a href="{{url_for('logout')}}">Logout</a>
+    {% else %}
+        <a href="{{url_for('login')}}">Login</a>
+        <a href="{{url_for('signup')}}">Signup</a>
+    {% endif %}
 </div>
 
 {% with messages = get_flashed_messages() %}
