@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}
+    Recipes
+{% endblock title %}
+
+{% if errors %}
+    {{errors}}
+{% endif %}
+
+{% block content %}
+
+    <h1>Recipe builder</h1>
+    <div id="builder-wrapper">
+        <button onclick="resetAll()">Reset all</button>
+
+        <div id="warning-message-wrapper">
+            <span id="warningsSpan"></span>
+        </div>
+        <div id="macros-wrapper">
+
+            <span id="runningMacros"></span>
+        </div>
+
+        <div id="ingredient-list-wrapper">
+                <span id="ingredient-list-title">Ingredients:</span> <br>
+                <select class="ingredientSelections" name="category" id="categorySelect">
+                    <option class="ingredientOption" value="" selected disabled hidden>Ingredient type</option>
+                    <option class="ingredientOption" value="all">All</option>
+                    <option class="ingredientOption" value="meat">Meats</option>
+                    <option class="ingredientOption" value="vegetables">Vegetables</option>
+                    <option class="ingredientOption" value="fruits">Fruits</option>
+                    <option class="ingredientOption" value="grains and beans">Grains & Beans</option>
+                    <option class="ingredientOption" value="fish and seafood">Fish & Seafood</option>
+                    <option class="ingredientOption" value="oils and fats">Oils & Fats</option>
+                    <option class="ingredientOption" value="protein">Proteins</option>
+                    <option class="ingredientOption" value="nuts">Nuts</option>
+                    <!-- <option value=""></option> -->
+                </select>
+
+                <!-- <select name="categorySelect" id="ingredientSelect">
+                </select> -->
+                <select class="ingredientSelections" name="categorySelect" id="ingredientSelect">
+                    <option class="ingredientOption" value="" selected disabled hidden>Ingredient</option>
+                </select>
+
+                <input class="ingredientSelections" id="weight-input" type="number" placeholder="(g/ml)" size="6">
+                
+                <button id="addIngredientButton">Add</button>
+                
+                <div id="ingredients-text">
+
+                    <div id="ingredient-list">
+            
+                    </div>
+                </div>
+        </div>
+
+        <div id="step-add">
+            
+            <button id="addStepButton">Add step</button>
+            <input id="stepInput" type="text" onkeypress="addStepItem(event)">
+
+            <div id="steps-wrapper">
+                
+            </div>
+        </div>
+        <div id="recipe-info-wrapper">
+
+            <!-- <label for="recipe_name">Recipe name:</label> -->
+            <input type="text" name="recipe_name" id="recipe_name" required minlength="4" placeholder="Recipe name">
+            <select name="recipeCategory" id="recipeCategory">
+                <option class="categoryOption" value="" selected disabled hidden>Category</option>
+                <option class="categoryOption" value="Breakfast">Breakfast</option>
+                <option class="categoryOption" value="Brunch">Brunch</option>
+                <option class="categoryOption" value="Lunch">Lunch</option>
+                <option class="categoryOption" value="Dinner">Dinner</option>
+            </select>
+        </div>
+            <button id="submitButton">Submit</button>
+            <!-- SUBMIT MESSAGES -->
+            <div id="submitMessage-wrapper">
+                <span id="submitMessage"></span>
+            </div>
+
+    </div>
+
+{% endblock  %}
+
+{% block scripts %}
+<script>
+
+    var categorySelection = document.getElementById("ingredientSelect");
+
+    //get the ingredients using fetch based on the category selected 
+    //var ingredientCategory = document.getElementById
+    document.getElementById("categorySelect").addEventListener('change',(event)=>{
+        //use the functions to add to the next selection list
+        var category = event.target.value;
+       getIngredientsCategory(category);
+        
+    })
+
+    function getIngredientsCategory(category){
+        //fetch api to get the ingredients on page load 
+        //and load them into a ui element 
+        fetch("/getIngredientByCategory",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify({"category":category})
+        })
+        .then((response) => response.json())
+        .then((responseData) => {
+            //do stuff with the JSON response here 
+            clearOptions(categorySelection);
+            console.log(responseData)
+            for (const thing of responseData['rows']) {
+                console.log(thing['name']);
+                addToSelection(thing);
+                
+            }
+        })
+    }
+    //set the selections 
+    function addToSelection(option){
+        //create new element
+        var selectionOption = document.createElement("option");
+        selectionOption.value = option['name'];
+        selectionOption.innerText = option['name'];
+
+        categorySelection.appendChild(selectionOption);//
+    }
+
+    //helper functions
+
+    function clearOptions(selection){
+        selection.innerHTML = "";
+     }
+</script>
+    
+{% endblock scripts %}

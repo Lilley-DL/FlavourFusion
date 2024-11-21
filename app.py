@@ -225,6 +225,40 @@ def reciepSearch(name):
     #flash or return a message if it is not
     pass
 
+#RECIPE BUILDER 
+@app.route("/recipeBuilder",methods=['GET','POST'])
+@flask_login.login_required
+def recipeBuilder():
+    return render_template("recipeBuilder.html")
+
+#ingredients stuff
+#get by category 
+@app.route("/getIngredientByCategory",methods=['POST'])
+def getIngredientByCategory():
+    if request.method == "POST":
+        #get the data from the post request 
+        data = request.json
+        category = data['category']
+        app.logger.info(f"JSON sent to the BE = {category}")
+        #use the db to get the data based on the category 
+
+        #check for the protein flag
+        sql = "SELECT * FROM ingredients WHERE category = %s"
+        if category == 'protein':
+            sql = "SELECT * FROM ingredients WHERE protein > 10"
+
+        result,rows = db.get(sql,(category,))
+        if result:
+            return jsonify({"message":"success","rows":rows})
+        else:
+            return jsonify({"result":result,"message":rows})
+            
+    
+
+
+
+
+
 
 @app.route("/logout")
 def logout():
