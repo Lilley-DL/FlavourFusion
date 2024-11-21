@@ -88,8 +88,27 @@
 
 {% block scripts %}
 <script>
+    
+    var warningBox = document.getElementById("warningsSpan");
 
     var categorySelection = document.getElementById("ingredientSelect");
+    var ingredientWeight = document.getElementById("weight-input");
+    var ingredientsList = document.getElementById("ingredient-list");
+    var ingredientAddButton = document.getElementById("addIngredientButton");
+
+    var ingredientobjArray = [];
+    var currentIngredient = {}
+
+    var stepCount = 0;
+    var ingredientCount = 0;
+
+    var recipeMacros = {
+        protein:0,
+        fats:0,
+        fibre:0,
+        carbohydrates:0,
+        calories:0
+    };
 
     //get the ingredients using fetch based on the category selected 
     //var ingredientCategory = document.getElementById
@@ -131,12 +150,189 @@
 
         categorySelection.appendChild(selectionOption);//
     }
+    //on change get ingredient by name
+    categorySelection.addEventListener('change',(event)=>{
+        console.log(categorySelection.value);
+        //set current ingredient by fetching by ingredient name 
+        getIngredientByName(categorySelection.value);
+    })
+
+    function getIngredientByName(ingredient){
+        //fetch api to get the ingredients on page load 
+        //and load them into a ui element 
+        fetch("/getIngredientByName",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify({"name":ingredient})
+        })
+        .then((response) => response.json())
+        .then((responseData) => {
+            console.log(responseData);
+            currentIngredient = responseData['rows'][0];
+            // return responseData;
+            //do stuff with the JSON response here 
+        })
+    }
+
+       //add ingredient button
+    ingredientAddButton.addEventListener('click',(event)=>{
+
+        var weight = ingredientWeight.value;
+        if(weight > 0){
+
+            currentIngredient['weight'] = weight;
+            //add to the array 
+            ingredientobjArray.push(currentIngredient);
+            //incrament macro
+            runnignMacros();
+            //update the ui
+            addIngredientToList(currentIngredient);
+            
+        }else{
+            //alert box 
+            displayWarning("Ingredient weight must be greater than 0");
+            //set timeout for it to clear 
+            setTimeout(clearWarning,3000);
+        }
+    })
 
     //helper functions
+
+    function runnignMacros(){
+        //run this function every time something is added and removed from the ingredient list
+        //reset the runing value before every time 
+        resetMacros();
+        
+        //this might be causing some of the issues with removal of ingredients
+        for(ingredient of ingredientobjArray){
+            addIngredientMacros(ingredient);
+        }
+
+        console.log(recipeMacros);
+        // document.getElementById("runningMacros").value
+        displayRunningMacros();
+    }
+
+    
+    function displayRunningMacros(){
+        console.log(recipeMacros)
+
+        var string = `Kcal:${recipeMacros['calories'].toFixed(2)}, Protein:${recipeMacros['protein'].toFixed(2)}, Carbs:${recipeMacros['carbohydrates'].toFixed(2)}, Fats:${recipeMacros['fats'].toFixed(2)} `;
+
+        document.getElementById("runningMacros").innerText = string;
+    }
+
+    
+    function addIngredientMacros(ingredient){
+
+        console.log(ingredient)
+        var ingredientGrams = (Number(ingredient['weight']) / 100); //may need to be renamed
+
+        recipeMacros['protein'] += (ingredient['protein'] * ingredientGrams);
+        recipeMacros['fats'] +=  (ingredient['fats'] * ingredientGrams);
+        recipeMacros['carbohydrates'] += (ingredient['carbohydrates'] * ingredientGrams);
+        recipeMacros['fibre'] += (ingredient['fibre'] * ingredientGrams);
+        recipeMacros['calories'] += (ingredient['kcals_100g'] * ingredientGrams);
+
+    }
+
+    function addIngredientToList(object){
+        var liNode = document.createElement("li");
+
+        var ingredientString = `${object['name']} ${object['weight']}g`;
+
+        // var textNode = document.createTextNode(object['name']);
+        var textNode = document.createTextNode(ingredientString);
+
+        liNode.setAttribute("class","ingredients");
+
+        liNode.setAttribute("id",ingredientCount);
+        //the above was changed for removal reasons 
+        ingredientCount++; // should this be the length of the obj array? 
+
+        var removeButton = document.createElement("input");
+        removeButton.setAttribute("type","button");
+        removeButton.setAttribute("value","X");
+        removeButton.addEventListener('click',removeIngredient);
+
+        //add to the div
+        liNode.appendChild(textNode);
+        liNode.appendChild(removeButton);
+        ingredientsList.appendChild(liNode);
+    }
+
+    function removeIngredient(event){
+
+        var idToRmove = event.currentTarget.parentElement.id;
+
+        removeFromIngredientList(idToRmove);
+        var toremove = document.getElementById(idToRmove);
+
+        toremove.remove();
+
+        ingredientobjArray = ingredientobjArray.filter(removeNull);// might need to do this later ?
+        console.log(ingredientobjArray);
+        
+        //resetElementId();
+
+        runnignMacros();
+    }
+
+    function removeFromIngredientList(id){
+        
+        console.log("id to remove = "+ id);
+
+        if(ingredientobjArray.length == 1){
+            ingredientobjArray = [];
+        }
+
+        if(id > -1){
+            ingredientobjArray[id] = null;
+        }
+
+    }
+
+    function removeNull(item){
+        if(item){
+            return true;
+        }
+        return false;
+    }
+    //whenever an element is removed I MIGHT NOT NEED THIS IN FUTURE ??
+    function resetElementId(){
+
+        var elements = document.getElementsByClassName("ingredients");
+
+        ingredientCount = elements.length;
+
+        for (let index = 0; index < elements.length; index++) {
+            elements[index].setAttribute("id",index);
+        }
+
+    }
+
+    function resetMacros(){
+        recipeMacros['protein']= 0;
+        recipeMacros['fats'] = 0;
+        recipeMacros['carbohydrates'] = 0;
+        recipeMacros['fibre'] = 0;
+        recipeMacros['calories'] = 0;
+    }
 
     function clearOptions(selection){
         selection.innerHTML = "";
      }
+
+     function displayWarning(warningText){
+        warningBox.innerText = " >>" +warningText+"<< ";
+    }
+
+    function clearWarning(){
+        warningBox.innerText = "";
+    }
+
 </script>
     
 {% endblock scripts %}

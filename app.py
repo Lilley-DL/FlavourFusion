@@ -242,6 +242,8 @@ def getIngredientByCategory():
         app.logger.info(f"JSON sent to the BE = {category}")
         #use the db to get the data based on the category 
 
+        #TODO::check for 'all' flag aswell
+
         #check for the protein flag
         sql = "SELECT * FROM ingredients WHERE category = %s"
         if category == 'protein':
@@ -252,7 +254,24 @@ def getIngredientByCategory():
             return jsonify({"message":"success","rows":rows})
         else:
             return jsonify({"result":result,"message":rows})
+        
+
+@app.route("/getIngredientByName",methods=['POST'])
+def getIngredientByName():
+    if request.method == "POST":
+        #get the data from the post request 
+        data = request.json
+        name = data['name']
+        #check for the protein flag
+        sql = "SELECT * FROM ingredients WHERE name = %s"
+
+        result,rows = db.get(sql,(name,))
+        if result:
+            return jsonify({"message":"success","rows":rows})
+        else:
+            return jsonify({"result":result,"message":rows})
             
+    
     
 
 
