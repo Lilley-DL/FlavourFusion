@@ -5,7 +5,7 @@ from wtforms import StringField,EmailField,SubmitField,PasswordField
 from wtforms.validators import DataRequired,Email
 import flask_login
 from dotenv import load_dotenv
-import csv , json, os, hashlib, binascii
+import csv , json, os, hashlib, binascii, html
 
 from Database import get_db_connection,Database
 
@@ -109,10 +109,10 @@ def signup():
     form = SignupForm()
 
     if form.validate_on_submit():
-        username = form.username.data
+        username = html.escape(form.username.data)
         form.username.data = ''
 
-        email = form.email.data
+        email = html.escape(form.email.data)
         form.email.data = ''
 
         password = form.password.data # might need to hash it here

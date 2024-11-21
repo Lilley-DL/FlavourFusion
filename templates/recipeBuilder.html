@@ -83,12 +83,21 @@
             </div>
 
     </div>
+    <p>New form</p>
+    <form action="{{url_for('recipeBuilder')}}" method="post" id="recipe-form">
+        <input type="hidden" id="caloriesHidden" name="calories">
+        <input type="hidden" id="proteinHidden" name="protein">
+        <input type="hidden" id="fatsHidden" name="fats">
+        <input type="hidden" id="carbsHidden" name="carbs">
+        <input type="hidden" id="fibreHidden" name="fibre">
+
+    </form>
 
 {% endblock  %}
 
 {% block scripts %}
 <script>
-    
+    var addStepButton = document.getElementById("addStepButton");
     var warningBox = document.getElementById("warningsSpan");
 
     var categorySelection = document.getElementById("ingredientSelect");
@@ -96,7 +105,12 @@
     var ingredientsList = document.getElementById("ingredient-list");
     var ingredientAddButton = document.getElementById("addIngredientButton");
 
+    var stepForm = document.getElementById("steps-wrapper");
+
+    var recipeForm = document.getElementById("recipe-form")
+
     var ingredientobjArray = [];
+    var stepObjectArray = []
     var currentIngredient = {}
 
     var stepCount = 0;
@@ -110,6 +124,13 @@
         calories:0
     };
 
+    //hidden form 
+    var caloriesHidden = document.getElementById("caloriesHidden")
+    var proteinHidden = document.getElementById("proteinHidden")
+    var  fatsHidden = document.getElementById("fatsHidden")
+    var carbsHidden = document.getElementById("carbsHidden")
+    var fibreHidden = document.getElementById("fibreHidden")
+
     //get the ingredients using fetch based on the category selected 
     //var ingredientCategory = document.getElementById
     document.getElementById("categorySelect").addEventListener('change',(event)=>{
@@ -118,6 +139,82 @@
        getIngredientsCategory(category);
         
     })
+    function addStepItem(event) {
+
+        if(event.key == "Enter"){
+
+            //get the text from the input 
+            var stepText = event.target.value;
+            if(stepText != "" && stepText.length > 3){
+
+                appendStepToForm(stepText);
+                event.target.value = "";
+            }
+            //could do with a warning box or something
+            
+        }
+
+    }
+
+    function appendStep(stepText){
+
+        var liNode = document.createElement("li");
+        var textNode = document.createTextNode(stepText);
+
+        liNode.appendChild(textNode);
+
+        //add to the steps div
+        recipeSteps.appendChild(liNode);
+
+        addStepButton.disabled = false;
+        stepInput.style.visibility = "hidden";
+        
+    }
+
+    function appendStepToForm(stepText){
+
+        //div for the input and button to go into
+        var inputDiv = document.createElement("div");
+        inputDiv.setAttribute("id","step_"+stepCount);
+
+        var stepInput = document.createElement("input");
+
+        stepInput.setAttribute("type","text");
+        stepInput.setAttribute("name","step_" + stepCount);
+        
+        //stepInput.setAttribute("id","formStep");
+        stepInput.classList.add("formStep")
+        //this is used by the get step by element function 
+        //to grab updated steps before sending them 
+        //stepInput.setAttribute("class","formStep");
+
+        stepInput.setAttribute("value",stepText);
+
+        var removeButton = document.createElement("input");
+        removeButton.setAttribute("type","button");
+        removeButton.setAttribute("value","X");
+        // removeButton.setAttribute("onclick","removeStep()")
+        removeButton.addEventListener('click',removeStep);
+
+        //add input to div
+        inputDiv.appendChild(stepInput);
+        inputDiv.appendChild(removeButton);
+
+        //add to the form 
+        stepForm.appendChild(inputDiv);
+
+        //add to new flask version form 
+        recipeForm.appendChild(inputDiv) 
+
+        let step = {
+            text:stepText,
+            stepNumber:stepCount
+        }
+        stepObjectArray.push(step);
+   
+        stepCount++;
+
+    }
 
     function getIngredientsCategory(category){
         //fetch api to get the ingredients on page load 
@@ -214,6 +311,30 @@
         // document.getElementById("runningMacros").value
         displayRunningMacros();
     }
+    addStepButton.addEventListener('click', (event)=>{
+
+        //addStepButton.disabled = true;
+        stepInput.style.visibility = "visible";
+        stepInput.focus();
+
+    });
+
+    function removeStep(event){
+
+        //get just the id number 
+        var id = event.currentTarget.parentElement.id.replace("step_","");
+        var idToRmove = event.currentTarget.parentElement.id;
+        
+        if(id > -1){
+            stepObjectArray[id] = null;
+        }
+
+        var toremove = document.getElementById(idToRmove);
+        //UI
+        toremove.remove();
+        //json
+        stepObjectArray = stepObjectArray.filter(removeNull);
+    }
 
     
     function displayRunningMacros(){
@@ -235,6 +356,13 @@
         recipeMacros['carbohydrates'] += (ingredient['carbohydrates'] * ingredientGrams);
         recipeMacros['fibre'] += (ingredient['fibre'] * ingredientGrams);
         recipeMacros['calories'] += (ingredient['kcals_100g'] * ingredientGrams);
+
+        //adding to the hidden values of new form 
+        proteinHidden.value = recipeMacros['protein']
+        fatsHidden.value = recipeMacros['fats']
+        carbsHidden.value = recipeMacros['carbohydrates']
+        fibreHidden.value = recipeMacros['fibre']
+        caloriesHidden.value = recipeMacros['calories']
 
     }
 
@@ -319,6 +447,14 @@
         recipeMacros['carbohydrates'] = 0;
         recipeMacros['fibre'] = 0;
         recipeMacros['calories'] = 0;
+
+        proteinHidden.value =""
+        fatsHidden.value = ""
+        carbsHidden.value = ""
+        fibreHidden.value = ""
+        caloriesHidden.value =""
+
+
     }
 
     function clearOptions(selection){
@@ -332,6 +468,7 @@
     function clearWarning(){
         warningBox.innerText = "";
     }
+    //implament reset all 
 
 </script>
     
