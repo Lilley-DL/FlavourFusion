@@ -229,6 +229,15 @@ def reciepSearch(name):
 @app.route("/recipeBuilder",methods=['GET','POST'])
 @flask_login.login_required
 def recipeBuilder():
+
+    if request.method == "POST":
+
+        app.logger.info(f"REQUEST : {request.form}")
+
+        flash("Recipe saved")
+        return render_template("recipeBuilder.html")
+
+
     return render_template("recipeBuilder.html")
 
 #ingredients stuff

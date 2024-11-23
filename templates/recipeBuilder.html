@@ -11,7 +11,7 @@
 
     <h1>Recipe builder</h1>
     <div id="builder-wrapper">
-        <button onclick="resetAll()">Reset all</button>
+        <!-- <button onclick="resetAll()">Reset all</button> -->
 
         <div id="warning-message-wrapper">
             <span id="warningsSpan"></span>
@@ -40,12 +40,12 @@
                 <!-- <select name="categorySelect" id="ingredientSelect">
                 </select> -->
                 <select class="ingredientSelections" name="categorySelect" id="ingredientSelect">
-                    <option class="ingredientOption" value="" selected disabled hidden>Ingredient</option>
+                    <option class="ingredientOption" value="" selected="selected" disabled hidden>Ingredient</option>
                 </select>
 
                 <input class="ingredientSelections" id="weight-input" type="number" placeholder="(g/ml)" size="6">
                 
-                <button id="addIngredientButton">Add</button>
+                <button id="addIngredientButton">Add Ingredient</button>
                 
                 <div id="ingredients-text">
 
@@ -54,16 +54,18 @@
                     </div>
                 </div>
         </div>
-
+        <br>
         <div id="step-add">
-            
-            <button id="addStepButton">Add step</button>
+            <label for="stepInput">Step:</label>
+            <br>
             <input id="stepInput" type="text" onkeypress="addStepItem(event)">
+            <button id="addStepButton">Add step</button>
 
             <div id="steps-wrapper">
                 
             </div>
         </div>
+        <br>
         <div id="recipe-info-wrapper">
 
             <!-- <label for="recipe_name">Recipe name:</label> -->
@@ -83,24 +85,38 @@
             </div>
 
     </div>
-    <p>New form</p>
+
+    <h3>New form</h3>
+
     <form action="{{url_for('recipeBuilder')}}" method="post" id="recipe-form">
         <input type="hidden" id="caloriesHidden" name="calories">
         <input type="hidden" id="proteinHidden" name="protein">
         <input type="hidden" id="fatsHidden" name="fats">
         <input type="hidden" id="carbsHidden" name="carbs">
         <input type="hidden" id="fibreHidden" name="fibre">
+        
+        <label for="">Ingredients:</label>
+        <div id="formIngredients">
 
+        </div>
+        <label for="">Steps:</label>
+        <div id="formSteps">
+
+        </div>
+        <input type="submit" value="Save">
     </form>
 
 {% endblock  %}
 
 {% block scripts %}
 <script>
+    var stepInput = document.getElementById("stepInput")
     var addStepButton = document.getElementById("addStepButton");
     var warningBox = document.getElementById("warningsSpan");
 
-    var categorySelection = document.getElementById("ingredientSelect");
+    var categorySelect = document.getElementById("categorySelect")
+
+    var ingredientSelection = document.getElementById("ingredientSelect");
     var ingredientWeight = document.getElementById("weight-input");
     var ingredientsList = document.getElementById("ingredient-list");
     var ingredientAddButton = document.getElementById("addIngredientButton");
@@ -108,6 +124,9 @@
     var stepForm = document.getElementById("steps-wrapper");
 
     var recipeForm = document.getElementById("recipe-form")
+
+    var formIngredients = document.getElementById("formIngredients")
+    var formSteps = document.getElementById("formSteps")
 
     var ingredientobjArray = [];
     var stepObjectArray = []
@@ -123,6 +142,10 @@
         carbohydrates:0,
         calories:0
     };
+
+    //this will be the object that the macros,ingredients and steps will get wrapped up into 
+    //when the recipe is saved for later, or published 
+    var recipeObject = {}
 
     //hidden form 
     var caloriesHidden = document.getElementById("caloriesHidden")
@@ -156,6 +179,7 @@
 
     }
 
+    //CAN REMOVE 
     function appendStep(stepText){
 
         var liNode = document.createElement("li");
@@ -202,9 +226,10 @@
 
         //add to the form 
         stepForm.appendChild(inputDiv);
+        formSteps.appendChild(inputDiv);
 
         //add to new flask version form 
-        recipeForm.appendChild(inputDiv) 
+        //recipeForm.appendChild(inputDiv) 
 
         let step = {
             text:stepText,
@@ -229,10 +254,17 @@
         .then((response) => response.json())
         .then((responseData) => {
             //do stuff with the JSON response here 
-            clearOptions(categorySelection);
-            console.log(responseData)
+            clearOptions(ingredientSelection);
+            //console.log(responseData)
+            //add the default select header 
+            var selectionOption = document.createElement("option");
+            selectionOption.value = "";
+            selectionOption.innerText = "Ingredient"
+            selectionOption.selected = true
+            selectionOption.disabled = true
+            ingredientSelection.appendChild(selectionOption);//
             for (const thing of responseData['rows']) {
-                console.log(thing['name']);
+
                 addToSelection(thing);
                 
             }
@@ -245,13 +277,16 @@
         selectionOption.value = option['name'];
         selectionOption.innerText = option['name'];
 
-        categorySelection.appendChild(selectionOption);//
+        ingredientSelection.appendChild(selectionOption);//
     }
     //on change get ingredient by name
-    categorySelection.addEventListener('change',(event)=>{
-        console.log(categorySelection.value);
-        //set current ingredient by fetching by ingredient name 
-        getIngredientByName(categorySelection.value);
+    ingredientSelection.addEventListener('change',(event)=>{
+        //console.log(categorySelection.value);
+        //check for null incase the default is somehow selected
+        if(ingredientSelection.value != ""){
+            getIngredientByName(ingredientSelection.value);
+
+        }
     })
 
     function getIngredientByName(ingredient){
@@ -266,7 +301,7 @@
         })
         .then((response) => response.json())
         .then((responseData) => {
-            console.log(responseData);
+            //console.log(responseData);
             currentIngredient = responseData['rows'][0];
             // return responseData;
             //do stuff with the JSON response here 
@@ -277,19 +312,40 @@
     ingredientAddButton.addEventListener('click',(event)=>{
 
         var weight = ingredientWeight.value;
-        if(weight > 0){
-
-            currentIngredient['weight'] = weight;
-            //add to the array 
-            ingredientobjArray.push(currentIngredient);
-            //incrament macro
-            runnignMacros();
-            //update the ui
-            addIngredientToList(currentIngredient);
-            
+        if("name" in currentIngredient){
+            if(weight > 0){
+                currentIngredient['weight'] = weight;
+                //add to the array 
+                ingredientobjArray.push(currentIngredient);
+                //incrament macro
+                runnignMacros();
+                //update the ui
+                addIngredientToList(currentIngredient);
+                //reset current ingredient 
+                currentIngredient = {}
+                //reset the select menus ? 
+                var selectionOption = document.createElement("option");
+                selectionOption.value = "";
+                selectionOption.innerText = "Ingredient"
+                selectionOption.selected = true
+                selectionOption.disabled = true
+                //reset the html
+                ingredientSelection.innerHTML = ""
+                //add the default 
+                ingredientSelection.appendChild(selectionOption);//
+                //set focus back to the category ?
+                // re select the ingredients 
+                var category = categorySelect.value;
+                getIngredientsCategory(category);
+            }else{
+                //alert box 
+                displayWarning("Ingredient weight must be greater than 0");
+                //set timeout for it to clear 
+                setTimeout(clearWarning,3000);
+            }
         }else{
             //alert box 
-            displayWarning("Ingredient weight must be greater than 0");
+            displayWarning("An ingredient must be selected");
             //set timeout for it to clear 
             setTimeout(clearWarning,3000);
         }
@@ -307,20 +363,21 @@
             addIngredientMacros(ingredient);
         }
 
-        console.log(recipeMacros);
+        console.log("recipe macros: ",recipeMacros);
         // document.getElementById("runningMacros").value
         displayRunningMacros();
     }
     addStepButton.addEventListener('click', (event)=>{
+        var stepText = stepInput.value;
+        if(stepText != "" && stepText.length > 3){
 
-        //addStepButton.disabled = true;
-        stepInput.style.visibility = "visible";
-        stepInput.focus();
+            appendStepToForm(stepText);
+            stepInput.value = "";
+        }
 
     });
 
     function removeStep(event){
-
         //get just the id number 
         var id = event.currentTarget.parentElement.id.replace("step_","");
         var idToRmove = event.currentTarget.parentElement.id;
@@ -328,7 +385,6 @@
         if(id > -1){
             stepObjectArray[id] = null;
         }
-
         var toremove = document.getElementById(idToRmove);
         //UI
         toremove.remove();
@@ -338,17 +394,14 @@
 
     
     function displayRunningMacros(){
-        console.log(recipeMacros)
-
         var string = `Kcal:${recipeMacros['calories'].toFixed(2)}, Protein:${recipeMacros['protein'].toFixed(2)}, Carbs:${recipeMacros['carbohydrates'].toFixed(2)}, Fats:${recipeMacros['fats'].toFixed(2)} `;
-
         document.getElementById("runningMacros").innerText = string;
     }
 
     
     function addIngredientMacros(ingredient){
 
-        console.log(ingredient)
+        console.log("Ingredient being added to list : ",ingredient)
         var ingredientGrams = (Number(ingredient['weight']) / 100); //may need to be renamed
 
         recipeMacros['protein'] += (ingredient['protein'] * ingredientGrams);
@@ -371,11 +424,52 @@
 
         var ingredientString = `${object['name']} ${object['weight']}g`;
 
-        // var textNode = document.createTextNode(object['name']);
+        var ingredientWrapper = document.createElement("div")
+        ingredientWrapper.classList.add("ingredient-wrapper")
+        ingredientWrapper.id = ingredientCount;
+
+        //NEWER
+        var ingredientInputNode = document.createElement("input")
+        ingredientInputNode.type = "text"
+        ingredientInputNode.value = ingredientString
+        ingredientInputNode.disabled = true
+        //hidden ingredient to get the value to backend
+        var hiddenIngredietnNode = document.createElement("input")
+        hiddenIngredietnNode.type = "hidden"
+        hiddenIngredietnNode.value = ingredientString
+        hiddenIngredietnNode.name = "ingredient_"+ingredientCount
+
+
+        //remove button 
+        let removeIngredientButton = document.createElement("button")
+        removeIngredientButton.innerHTML = "X"
+        //add input and remove button to wrapper 
+        ingredientWrapper.appendChild(hiddenIngredietnNode)
+        ingredientWrapper.appendChild(ingredientInputNode)
+        ingredientWrapper.appendChild(removeIngredientButton)
+
+        //removeIngredientButton.addEventListener("click",removeIngredientNew)
+
+        removeIngredientButton.addEventListener("click",function(e){
+            event.preventDefault()
+            console.log("parent element id = ",event.target.parentElement.id)
+            event.target.parentElement.remove()
+            var idToRmove = event.target.parentElement.id;
+
+            removeFromIngredientList(idToRmove);
+
+            ingredientobjArray = ingredientobjArray.filter(removeNull);// might need to do this later ?
+            console.log(ingredientobjArray);
+            
+            resetElementId();
+    
+            runnignMacros();
+        })
+        
+        
+        //OLD VERSION
         var textNode = document.createTextNode(ingredientString);
-
         liNode.setAttribute("class","ingredients");
-
         liNode.setAttribute("id",ingredientCount);
         //the above was changed for removal reasons 
         ingredientCount++; // should this be the length of the obj array? 
@@ -389,6 +483,25 @@
         liNode.appendChild(textNode);
         liNode.appendChild(removeButton);
         ingredientsList.appendChild(liNode);
+
+        formIngredients.appendChild(ingredientWrapper)
+    }
+
+    function removeIngredientNew(event){
+        event.preventDefault()
+        var idToRmove = event.target.parentElement.id;
+
+        removeFromIngredientList(idToRmove);
+        var toremove = document.getElementById(idToRmove);
+
+        toremove.remove();
+
+        ingredientobjArray = ingredientobjArray.filter(removeNull);// might need to do this later ?
+        console.log(ingredientobjArray);
+        
+        resetElementId();
+
+        runnignMacros();
     }
 
     function removeIngredient(event){
@@ -403,15 +516,13 @@
         ingredientobjArray = ingredientobjArray.filter(removeNull);// might need to do this later ?
         console.log(ingredientobjArray);
         
-        //resetElementId();
+        resetElementId();
 
         runnignMacros();
     }
 
     function removeFromIngredientList(id){
         
-        console.log("id to remove = "+ id);
-
         if(ingredientobjArray.length == 1){
             ingredientobjArray = [];
         }
@@ -431,7 +542,16 @@
     //whenever an element is removed I MIGHT NOT NEED THIS IN FUTURE ??
     function resetElementId(){
 
+        //for new version might need ingredient-wrapper
         var elements = document.getElementsByClassName("ingredients");
+
+        ingredientCount = elements.length;
+
+        for (let index = 0; index < elements.length; index++) {
+            elements[index].setAttribute("id",index);
+        }
+
+        var newElements = document.getElementsByClassName("ingredient-wrapper");
 
         ingredientCount = elements.length;
 
@@ -453,8 +573,6 @@
         carbsHidden.value = ""
         fibreHidden.value = ""
         caloriesHidden.value =""
-
-
     }
 
     function clearOptions(selection){
