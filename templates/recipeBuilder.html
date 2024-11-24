@@ -103,6 +103,8 @@
         <div id="formSteps">
 
         </div>
+        <label for="recipeName">Recipe name:</label>
+        <input type="text" name="recipeName" required>
         <input type="submit" value="Save">
     </form>
 
@@ -145,6 +147,7 @@
 
     //this will be the object that the macros,ingredients and steps will get wrapped up into 
     //when the recipe is saved for later, or published 
+    //ideally the UI should be based on this not the other way around 
     var recipeObject = {}
 
     //hidden form 
@@ -403,6 +406,8 @@
 
         console.log("Ingredient being added to list : ",ingredient)
         var ingredientGrams = (Number(ingredient['weight']) / 100); //may need to be renamed
+        
+        console.log("INGREDIENT GRAMS = ",ingredientGrams)
 
         recipeMacros['protein'] += (ingredient['protein'] * ingredientGrams);
         recipeMacros['fats'] +=  (ingredient['fats'] * ingredientGrams);

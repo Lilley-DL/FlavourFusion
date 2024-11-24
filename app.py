@@ -254,9 +254,9 @@ def getIngredientByCategory():
         #TODO::check for 'all' flag aswell
 
         #check for the protein flag
-        sql = "SELECT * FROM ingredients WHERE category = %s"
+        sql = "SELECT * FROM ingredients WHERE category = %s ORDER BY name"
         if category == 'protein':
-            sql = "SELECT * FROM ingredients WHERE protein > 10"
+            sql = "SELECT * FROM ingredients WHERE protein > 10 ORDER BY name"
 
         result,rows = db.get(sql,(category,))
         if result:
