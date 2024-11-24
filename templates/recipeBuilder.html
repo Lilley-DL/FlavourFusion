@@ -66,9 +66,7 @@
             </div>
         </div>
         <br>
-        <div id="recipe-info-wrapper">
-
-            <!-- <label for="recipe_name">Recipe name:</label> -->
+        <!-- <div id="recipe-info-wrapper">
             <input type="text" name="recipe_name" id="recipe_name" required minlength="4" placeholder="Recipe name">
             <select name="recipeCategory" id="recipeCategory">
                 <option class="categoryOption" value="" selected disabled hidden>Category</option>
@@ -77,12 +75,12 @@
                 <option class="categoryOption" value="Lunch">Lunch</option>
                 <option class="categoryOption" value="Dinner">Dinner</option>
             </select>
-        </div>
-            <button id="submitButton">Submit</button>
+        </div> -->
+            <!-- <button id="submitButton">Submit</button> -->
             <!-- SUBMIT MESSAGES -->
-            <div id="submitMessage-wrapper">
+            <!-- <div id="submitMessage-wrapper">
                 <span id="submitMessage"></span>
-            </div>
+            </div> -->
 
     </div>
 
@@ -156,6 +154,26 @@
     var  fatsHidden = document.getElementById("fatsHidden")
     var carbsHidden = document.getElementById("carbsHidden")
     var fibreHidden = document.getElementById("fibreHidden")
+
+    //on NEW submit
+    recipeForm.addEventListener("submit",(event) =>{
+        //is step count < 3 
+        if(stepCount < 3){
+            event.preventDefault()
+            displayWarning("There must be more than 2 steps for a recipe");
+            //set timeout for it to clear 
+            setTimeout(clearWarning,3000);
+        }
+        //are there any ingredients
+        if(ingredientobjArray.length < 2){
+            event.preventDefault()
+            displayWarning("There must be more than 1 ingredient for a recipe");
+            //set timeout for it to clear 
+            setTimeout(clearWarning,3000);
+        }
+
+    })
+
 
     //get the ingredients using fetch based on the category selected 
     //var ingredientCategory = document.getElementById
@@ -393,6 +411,8 @@
         toremove.remove();
         //json
         stepObjectArray = stepObjectArray.filter(removeNull);
+        //decrease step count 
+        stepCount--;
     }
 
     
@@ -436,20 +456,15 @@
         //NEWER
         var ingredientInputNode = document.createElement("input")
         ingredientInputNode.type = "text"
+        ingredientInputNode.classList.add("ingredient-value")
         ingredientInputNode.value = ingredientString
-        ingredientInputNode.disabled = true
-        //hidden ingredient to get the value to backend
-        var hiddenIngredietnNode = document.createElement("input")
-        hiddenIngredietnNode.type = "hidden"
-        hiddenIngredietnNode.value = ingredientString
-        hiddenIngredietnNode.name = "ingredient_"+ingredientCount
-
-
+        ingredientInputNode.readOnly = true
+        ingredientInputNode.name = "ingredient_"+ingredientCount
         //remove button 
         let removeIngredientButton = document.createElement("button")
         removeIngredientButton.innerHTML = "X"
         //add input and remove button to wrapper 
-        ingredientWrapper.appendChild(hiddenIngredietnNode)
+        //ingredientWrapper.appendChild(hiddenIngredietnNode)
         ingredientWrapper.appendChild(ingredientInputNode)
         ingredientWrapper.appendChild(removeIngredientButton)
 
@@ -467,27 +482,10 @@
             console.log(ingredientobjArray);
             
             resetElementId();
-    
+            
             runnignMacros();
         })
-        
-        
-        //OLD VERSION
-        var textNode = document.createTextNode(ingredientString);
-        liNode.setAttribute("class","ingredients");
-        liNode.setAttribute("id",ingredientCount);
-        //the above was changed for removal reasons 
-        ingredientCount++; // should this be the length of the obj array? 
-
-        var removeButton = document.createElement("input");
-        removeButton.setAttribute("type","button");
-        removeButton.setAttribute("value","X");
-        removeButton.addEventListener('click',removeIngredient);
-
-        //add to the div
-        liNode.appendChild(textNode);
-        liNode.appendChild(removeButton);
-        ingredientsList.appendChild(liNode);
+        ingredientCount++
 
         formIngredients.appendChild(ingredientWrapper)
     }
@@ -547,21 +545,16 @@
     //whenever an element is removed I MIGHT NOT NEED THIS IN FUTURE ??
     function resetElementId(){
 
-        //for new version might need ingredient-wrapper
-        var elements = document.getElementsByClassName("ingredients");
-
-        ingredientCount = elements.length;
-
-        for (let index = 0; index < elements.length; index++) {
-            elements[index].setAttribute("id",index);
-        }
-
+            //might not need this one anymore or the above 
         var newElements = document.getElementsByClassName("ingredient-wrapper");
 
-        ingredientCount = elements.length;
+        ingredientCount = newElements.length;
 
-        for (let index = 0; index < elements.length; index++) {
-            elements[index].setAttribute("id",index);
+        for (let index = 0; index < newElements.length; index++) {
+            newElements[index].setAttribute("id",index);
+            //set the children inputs here too 
+            let inputValue = newElements[index].getElementsByClassName("ingredient-value")
+            inputValue[0].name = "ingredient_"+index
         }
 
     }

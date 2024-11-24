@@ -235,7 +235,7 @@ def recipeBuilder():
         app.logger.info(f"REQUEST : {request.form}")
 
         flash("Recipe saved")
-        return render_template("recipeBuilder.html")
+        return redirect(url_for("recipeBuilder"))
 
 
     return render_template("recipeBuilder.html")
