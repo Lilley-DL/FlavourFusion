@@ -66,21 +66,6 @@
             </div>
         </div>
         <br>
-        <!-- <div id="recipe-info-wrapper">
-            <input type="text" name="recipe_name" id="recipe_name" required minlength="4" placeholder="Recipe name">
-            <select name="recipeCategory" id="recipeCategory">
-                <option class="categoryOption" value="" selected disabled hidden>Category</option>
-                <option class="categoryOption" value="Breakfast">Breakfast</option>
-                <option class="categoryOption" value="Brunch">Brunch</option>
-                <option class="categoryOption" value="Lunch">Lunch</option>
-                <option class="categoryOption" value="Dinner">Dinner</option>
-            </select>
-        </div> -->
-            <!-- <button id="submitButton">Submit</button> -->
-            <!-- SUBMIT MESSAGES -->
-            <!-- <div id="submitMessage-wrapper">
-                <span id="submitMessage"></span>
-            </div> -->
 
     </div>
 
@@ -102,7 +87,7 @@
 
         </div>
         <label for="recipeName">Recipe name:</label>
-        <input type="text" name="recipeName" required>
+        <input type="text" name="recipeName" id="recipeNameInput" required>
         <input type="submit" value="Save">
     </form>
 
@@ -127,6 +112,7 @@
 
     var formIngredients = document.getElementById("formIngredients")
     var formSteps = document.getElementById("formSteps")
+    var nameInput = document.getElementById("recipeNameInput")
 
     var ingredientobjArray = [];
     var stepObjectArray = []
@@ -167,11 +153,31 @@
         //are there any ingredients
         if(ingredientobjArray.length < 2){
             event.preventDefault()
+            console.log("Form event target =",event.target)
             displayWarning("There must be more than 1 ingredient for a recipe");
             //set timeout for it to clear 
             setTimeout(clearWarning,3000);
         }
 
+        var hiddenMacrosInput = document.createElement("input")
+        hiddenMacrosInput.name = "macros"
+        hiddenMacrosInput.hidden = true
+        hiddenMacrosInput.value = JSON.stringify(recipeMacros)
+
+        event.target.prepend(hiddenMacrosInput)
+
+    })
+
+    nameInput.addEventListener("keydown",(event)=>{
+        if(event.key == "Enter"){
+            //THIS IS A WIERD BUG / SIDE EFFECT FIX
+            //for some reason when the enter key is pressed in the name input, it
+            // fires the remove ingredient event and removes the first ingredient from the ingredients list 
+            event.preventDefault()
+
+        }
+        console.log("Key = ",event.key)
+        console.log("Event = ",event)
     })
 
 
@@ -183,11 +189,10 @@
        getIngredientsCategory(category);
         
     })
+
     function addStepItem(event) {
 
         if(event.key == "Enter"){
-
-            //get the text from the input 
             var stepText = event.target.value;
             if(stepText != "" && stepText.length > 3){
 
@@ -200,21 +205,6 @@
 
     }
 
-    //CAN REMOVE 
-    function appendStep(stepText){
-
-        var liNode = document.createElement("li");
-        var textNode = document.createTextNode(stepText);
-
-        liNode.appendChild(textNode);
-
-        //add to the steps div
-        recipeSteps.appendChild(liNode);
-
-        addStepButton.disabled = false;
-        stepInput.style.visibility = "hidden";
-        
-    }
 
     function appendStepToForm(stepText){
 
@@ -240,17 +230,12 @@
         removeButton.setAttribute("value","X");
         // removeButton.setAttribute("onclick","removeStep()")
         removeButton.addEventListener('click',removeStep);
-
         //add input to div
         inputDiv.appendChild(stepInput);
         inputDiv.appendChild(removeButton);
-
         //add to the form 
         stepForm.appendChild(inputDiv);
         formSteps.appendChild(inputDiv);
-
-        //add to new flask version form 
-        //recipeForm.appendChild(inputDiv) 
 
         let step = {
             text:stepText,
@@ -344,7 +329,7 @@
                 addIngredientToList(currentIngredient);
                 //reset current ingredient 
                 currentIngredient = {}
-                //reset the select menus ? 
+                // set the default ingredient seletion option 
                 var selectionOption = document.createElement("option");
                 selectionOption.value = "";
                 selectionOption.innerText = "Ingredient"
@@ -388,6 +373,7 @@
         // document.getElementById("runningMacros").value
         displayRunningMacros();
     }
+
     addStepButton.addEventListener('click', (event)=>{
         var stepText = stepInput.value;
         if(stepText != "" && stepText.length > 3){
@@ -427,15 +413,24 @@
         console.log("Ingredient being added to list : ",ingredient)
         var ingredientGrams = (Number(ingredient['weight']) / 100); //may need to be renamed
         
-        console.log("INGREDIENT GRAMS = ",ingredientGrams)
+        
+        recipeMacros['protein'] += (ingredient['protein'] * ingredientGrams)
+        recipeMacros['fats'] +=  (ingredient['fats'] * ingredientGrams)
+        recipeMacros['carbohydrates'] += (ingredient['carbohydrates'] * ingredientGrams)
+        recipeMacros['fibre'] += (ingredient['fibre'] * ingredientGrams)
+        recipeMacros['calories'] += (ingredient['kcals_100g'] * ingredientGrams)
+        //its the macros that need to be fixed aswell as the ingredients !!
 
-        recipeMacros['protein'] += (ingredient['protein'] * ingredientGrams);
-        recipeMacros['fats'] +=  (ingredient['fats'] * ingredientGrams);
-        recipeMacros['carbohydrates'] += (ingredient['carbohydrates'] * ingredientGrams);
-        recipeMacros['fibre'] += (ingredient['fibre'] * ingredientGrams);
-        recipeMacros['calories'] += (ingredient['kcals_100g'] * ingredientGrams);
+        recipeMacros['protein'] = Number(recipeMacros['protein'].toFixed(2))
+        recipeMacros['fats'] = Number(recipeMacros['fats'].toFixed(2))
+        recipeMacros['carbohydrates'] = Number(recipeMacros['carbohydrates'].toFixed(2))
+        recipeMacros['fibre'] = Number(recipeMacros['fibre'].toFixed(2))
+        recipeMacros['calories'] = Number(recipeMacros['calories'].toFixed(2))
 
-        //adding to the hidden values of new form 
+        console.log("MACROS FIXXED ? = ",recipeMacros)
+        //adding to the hidden values of new form   THESE ARE SOMEWHAT REDUNDENT NOW I SEND THE RECIPE OBJECT IN JSON
+        //WHEN THE FORM GETS SUBMITTED 
+        //set them to fixxed 
         proteinHidden.value = recipeMacros['protein']
         fatsHidden.value = recipeMacros['fats']
         carbsHidden.value = recipeMacros['carbohydrates']
@@ -445,9 +440,8 @@
     }
 
     function addIngredientToList(object){
-        var liNode = document.createElement("li");
-
-        var ingredientString = `${object['name']} ${object['weight']}g`;
+        
+        var ingredientString = `${object['name']} | ${object['weight']}g`;
 
         var ingredientWrapper = document.createElement("div")
         ingredientWrapper.classList.add("ingredient-wrapper")
@@ -468,10 +462,10 @@
         ingredientWrapper.appendChild(ingredientInputNode)
         ingredientWrapper.appendChild(removeIngredientButton)
 
-        //removeIngredientButton.addEventListener("click",removeIngredientNew)
-
-        removeIngredientButton.addEventListener("click",function(e){
+            //FOR SOME REASON THIS IS FIRING WHEN the enter key is pressed in the name input ????
+        removeIngredientButton.addEventListener("click",(event) =>{
             event.preventDefault()
+            console.log(event)
             console.log("parent element id = ",event.target.parentElement.id)
             event.target.parentElement.remove()
             var idToRmove = event.target.parentElement.id;

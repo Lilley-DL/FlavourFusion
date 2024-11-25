@@ -234,7 +234,20 @@ def recipeBuilder():
 
         app.logger.info(f"REQUEST : {request.form}")
 
-        flash("Recipe saved")
+        ingredients = []
+
+        #get the ingredients with key value 
+        for key , value in request.form.items():
+            if key.startswith("ingredient_"):
+                parts = value.split("|")
+                name = parts[0].strip()
+                amount = parts[1].strip()
+                ingredients.append((name,amount))
+        
+        app.logger.info(f"REQUEST INGREDIENTS AFTER PROCESSING: {ingredients}")
+        
+
+        flash("Recipe saved") # Use the front end message display instead, it will dispear after a timeout
         return redirect(url_for("recipeBuilder"))
 
 
