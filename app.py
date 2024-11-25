@@ -230,24 +230,45 @@ def reciepSearch(name):
 @flask_login.login_required
 def recipeBuilder():
 
+    currentUser = None
+
+    if flask_login.current_user.is_authenticated:
+        currentUser = flask_login.current_user
+
     if request.method == "POST":
 
-        app.logger.info(f"REQUEST : {request.form}")
+       # app.logger.info(f"REQUEST : {request.form}")
+        recipeObject = json.loads(request.form.get("recipeObject"))
 
-        ingredients = []
+        #get the recipe name from the object 
+        recipeName = recipeObject["name"]
 
-        #get the ingredients with key value 
-        for key , value in request.form.items():
-            if key.startswith("ingredient_"):
-                parts = value.split("|")
-                name = parts[0].strip()
-                amount = parts[1].strip()
-                ingredients.append((name,amount))
+        sql = """INSERT INTO public.recipe(
+	                recipe_name, recipe_data,author_id)
+	                VALUES (%s,%s,%s)"""
+        values = (recipeName,json.dumps(recipeObject),currentUser.id)
+        result, message = db.insert(sql,values)
+
+        if result:
+            flash("recipe saved")
+        else:
+            flash(f"Recipe not saved -- {message}")
+        # ingredients = []
+        # #get the ingredients with key value 
+        # for key , value in request.form.items():
+        #     if key.startswith("ingredient_"):
+        #         parts = value.split("|")
+        #         name = parts[0].strip()
+        #         amount = parts[1].strip()
+        #         ingredients.append((name,amount))
         
-        app.logger.info(f"REQUEST INGREDIENTS AFTER PROCESSING: {ingredients}")
-        
+        app.logger.info(f"REQUEST RECIPE NAME {recipeName}")
+        app.logger.info(f"REQUEST recipe json {json.dumps(recipeObject)}")
+        # for ing in recipeObject["ingredients"]:
+        #     app.logger.info(f" {ing["name"]} :: {ing}")
 
-        flash("Recipe saved") # Use the front end message display instead, it will dispear after a timeout
+
+        #flash("Recipe saved") # Use the front end message display instead, it will dispear after a timeout
         return redirect(url_for("recipeBuilder"))
 
 

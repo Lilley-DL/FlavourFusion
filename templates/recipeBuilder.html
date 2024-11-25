@@ -132,7 +132,12 @@
     //this will be the object that the macros,ingredients and steps will get wrapped up into 
     //when the recipe is saved for later, or published 
     //ideally the UI should be based on this not the other way around 
-    var recipeObject = {}
+    var recipeObject = {
+        ingredients:[],
+        steps:[],
+        macros:{},
+        name:""
+    }
 
     //hidden form 
     var caloriesHidden = document.getElementById("caloriesHidden")
@@ -163,6 +168,18 @@
         hiddenMacrosInput.name = "macros"
         hiddenMacrosInput.hidden = true
         hiddenMacrosInput.value = JSON.stringify(recipeMacros)
+
+        var hiddenObjectInput = document.createElement("input")
+        hiddenObjectInput.name = "recipeObject"
+        hiddenObjectInput.hidden = true
+        //recipeobject test
+        recipeObject.ingredients = ingredientobjArray
+        recipeObject.steps = stepObjectArray
+        recipeObject.macros = recipeMacros
+        recipeObject.name = nameInput.value
+
+        hiddenObjectInput.value = JSON.stringify(recipeObject)
+        event.target.prepend(hiddenObjectInput)
 
         event.target.prepend(hiddenMacrosInput)
 
@@ -321,8 +338,27 @@
         if("name" in currentIngredient){
             if(weight > 0){
                 currentIngredient['weight'] = weight;
+                //should the macro calculations be here ??
+                //based off of the weight ? re-write the ingredient macros based on the weight 
+                //TEST
+                var ingredientGrams = (Number(currentIngredient['weight']) / 100); //may need to be renamed
+
+                currentIngredient['protein'] = (currentIngredient['protein'] * ingredientGrams)
+                currentIngredient['fats'] =  (currentIngredient['fats'] * ingredientGrams)
+                currentIngredient['carbohydrates'] = (currentIngredient['carbohydrates'] * ingredientGrams)
+                currentIngredient['fibre'] = (currentIngredient['fibre'] * ingredientGrams)
+                currentIngredient['calories'] = (currentIngredient['kcals_100g'] * ingredientGrams)
+
+                currentIngredient['protein'] = Number(currentIngredient['protein'].toFixed(2))
+                currentIngredient['fats'] = Number(currentIngredient['fats'].toFixed(2))
+                currentIngredient['carbohydrates'] = Number(currentIngredient['carbohydrates'].toFixed(2))
+                currentIngredient['fibre'] = Number(currentIngredient['fibre'].toFixed(2))
+                currentIngredient['calories'] = Number(currentIngredient['calories'].toFixed(2))
+
                 //add to the array 
                 ingredientobjArray.push(currentIngredient);
+                console.log("INGREDIENT OBJECT ARRAY = ",ingredientobjArray)
+
                 //incrament macro
                 runnignMacros();
                 //update the ui
@@ -366,7 +402,8 @@
         
         //this might be causing some of the issues with removal of ingredients
         for(ingredient of ingredientobjArray){
-            addIngredientMacros(ingredient);
+            //addIngredientMacros(ingredient);
+            addMacros2(ingredient)
         }
 
         console.log("recipe macros: ",recipeMacros);
@@ -407,13 +444,33 @@
         document.getElementById("runningMacros").innerText = string;
     }
 
+    function addMacros2(ingredient){
+        recipeMacros['protein'] += ingredient['protein'] 
+        recipeMacros['fats'] +=  ingredient['fats'] 
+        recipeMacros['carbohydrates'] += ingredient['carbohydrates']
+        recipeMacros['fibre'] += ingredient['fibre']
+        recipeMacros['calories'] += ingredient['kcals_100g']
+
+        recipeMacros['protein'] = Number(recipeMacros['protein'].toFixed(2))
+        recipeMacros['fats'] = Number(recipeMacros['fats'].toFixed(2))
+        recipeMacros['carbohydrates'] = Number(recipeMacros['carbohydrates'].toFixed(2))
+        recipeMacros['fibre'] = Number(recipeMacros['fibre'].toFixed(2))
+        recipeMacros['calories'] = Number(recipeMacros['calories'].toFixed(2))
+
+        proteinHidden.value = recipeMacros['protein']
+        fatsHidden.value = recipeMacros['fats']
+        carbsHidden.value = recipeMacros['carbohydrates']
+        fibreHidden.value = recipeMacros['fibre']
+        caloriesHidden.value = recipeMacros['calories']
+    }
     
+    //the below function was changed to the above c=because the calculation for macros
+    //was moved to tabove it and now the ingredient objects array has the correct macro
+    //info for each ingredient based on the weight
     function addIngredientMacros(ingredient){
 
         console.log("Ingredient being added to list : ",ingredient)
         var ingredientGrams = (Number(ingredient['weight']) / 100); //may need to be renamed
-        
-        
         recipeMacros['protein'] += (ingredient['protein'] * ingredientGrams)
         recipeMacros['fats'] +=  (ingredient['fats'] * ingredientGrams)
         recipeMacros['carbohydrates'] += (ingredient['carbohydrates'] * ingredientGrams)
