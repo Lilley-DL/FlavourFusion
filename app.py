@@ -274,6 +274,23 @@ def recipeBuilder():
 
     return render_template("recipeBuilder.html")
 
+#this is going to be the new version of the recipe builder2
+@app.route("/altbuilder")
+@flask_login.login_required
+def altbuilder():
+
+    currentUser = None
+
+    if flask_login.current_user.is_authenticated:
+        currentUser = flask_login.current_user
+
+    if request.method == "POST":
+        return render_template("altRecipeBuilder.html")
+        
+
+    return render_template("altRecipeBuilder.html")
+
+
 #ingredients stuff
 #get by category 
 @app.route("/getIngredientByCategory",methods=['POST'])

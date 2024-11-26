@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}
+    Recipes
+{% endblock title %}
+
+{% if errors %}
+    {{errors}}
+{% endif %}
+
+{% block content %}
+
+<div id="warning-message-wrapper">
+    <span id="warningsSpan"></span>
+</div>
+    <h3>New recie builder </h3>
+
+    <label for="ingredientName">Ingredient:</label>
+    <input type="text" name="ingredientName" id="ingredientName">
+    <input type="number" name="ingredientAmount" id="ingredientAmount" placeholder="g/ml">
+    <button id="addIngredientButton">Add</button>
+    <br>
+
+    <label for="steps">Steps:</label>
+    <input type="text" name="step" id="step">
+    <input type="number" name="step" id="stepInput" placeholder="g/ml">
+    <button id="addStepButton">Add</button>
+    <br>
+    
+    <form action="{{url_for('recipeBuilder')}}" method="post" id="recipe-form">
+        <input type="hidden" id="caloriesHidden" name="calories">
+        <input type="hidden" id="proteinHidden" name="protein">
+        <input type="hidden" id="fatsHidden" name="fats">
+        <input type="hidden" id="carbsHidden" name="carbs">
+        <input type="hidden" id="fibreHidden" name="fibre">
+
+
+        <label for="">Ingredients:</label>
+        <div id="formIngredients">
+
+        </div>
+
+
+
+        <label for="">Steps:</label>
+        <div id="formSteps">
+
+        </div>
+        <label for="recipeName">Recipe name:</label>
+        <input type="text" name="recipeName" id="recipeNameInput" required>
+        <input type="submit" value="Save">
+    </form>
+
+{% endblock  %}
+
+{% block scripts %}
+<script>
+
+    var warningBox = document.getElementById("warningsSpan");
+
+    var ingredientInput = document.getElementById("ingredientName")
+    var ingredientAmount = document.getElementById("ingredientAmount")
+    var stepInput = document.getElementById("stepInput")
+
+    var addIngredientButton = document.getElementById("addIngredientButton")
+    var addStepButton = document.getElementById("addStepButton")
+
+    var recipeForm = document.getElementById("recipe-form")
+
+    var formIngredients = document.getElementById("formIngredients")
+    var formSteps = document.getElementById("formSteps")
+    var nameInput = document.getElementById("recipeNameInput")
+
+
+    addIngredientButton.addEventListener("click",(event) =>{
+        //get the ingredient name and amount 
+        var ingredietName = ingredientInput.value
+        var amount = ingredientAmount.value
+
+        //check the content of the inputs 
+        if(ingredietName == "" || amount == ""){
+            //show the error 
+            displayMessage("ingrdient values must be present")
+            return
+        }
+        //check the length and max valu of the inputs 
+
+        var ingredientString = ingredietName + " | " + amount +"g" //could be millileters
+
+        var ingredientWrapper = document.createElement("div")
+        ingredientWrapper.classList.add("ingredient-wrapper")
+
+        var ingredientInputNode = document.createElement("input")
+        ingredientInputNode.type = "text"
+        ingredientInputNode.classList.add("ingredient-value")
+        ingredientInputNode.value = ingredientString
+        ingredientInputNode.readOnly = true
+        ingredientInputNode.name = "ingredient"
+
+        let removeIngredientButton = document.createElement("button")
+        removeIngredientButton.innerHTML = "X"
+        //add input and remove button to wrapper 
+        //ingredientWrapper.appendChild(hiddenIngredietnNode)
+        ingredientWrapper.appendChild(ingredientInputNode)
+        ingredientWrapper.appendChild(removeIngredientButton)
+
+            //FOR SOME REASON THIS IS FIRING WHEN the enter key is pressed in the name input ????
+        removeIngredientButton.addEventListener("click",(event) =>{
+            event.preventDefault()
+            console.log(event)
+            console.log("parent element id = ",event.target.parentElement.id)
+            event.target.parentElement.remove()
+        })
+
+        formIngredients.appendChild(ingredientWrapper)
+
+    })
+    
+    function displayMessage(messagetext,timeout = 3000){
+        displayWarning(messagetext);
+        //set timeout for it to clear 
+        setTimeout(clearWarning,timeout);
+    }
+
+     function displayWarning(warningText){
+        warningBox.innerText = " >>" +warningText+"<< ";
+    }
+
+    function clearWarning(){
+        warningBox.innerText = "";
+    }
+    //implament reset all 
+
+</script>
+    
+{% endblock scripts %}
