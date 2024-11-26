@@ -14,19 +14,19 @@
 </div>
     <h3>New recie builder </h3>
 
-    <label for="ingredientName">Ingredient:</label>
+    <label for="ingredientName">Add Ingredient:</label>
     <input type="text" name="ingredientName" id="ingredientName">
     <input type="number" name="ingredientAmount" id="ingredientAmount" placeholder="g/ml">
     <button id="addIngredientButton">Add</button>
     <br>
-
-    <label for="steps">Steps:</label>
-    <input type="text" name="step" id="step">
-    <input type="number" name="step" id="stepInput" placeholder="g/ml">
-    <button id="addStepButton">Add</button>
     <br>
     
-    <form action="{{url_for('recipeBuilder')}}" method="post" id="recipe-form">
+    <label for="steps">Steps:</label>
+    <input type="text" name="step" id="stepInput">
+    <button id="addStepButton">Add</button>
+    <br>
+    <br>
+    <form action="{{url_for('altbuilder')}}" method="post" id="recipe-form">
         <input type="hidden" id="caloriesHidden" name="calories">
         <input type="hidden" id="proteinHidden" name="protein">
         <input type="hidden" id="fatsHidden" name="fats">
@@ -45,6 +45,7 @@
         <div id="formSteps">
 
         </div>
+        <br>
         <label for="recipeName">Recipe name:</label>
         <input type="text" name="recipeName" id="recipeNameInput" required>
         <input type="submit" value="Save">
@@ -84,7 +85,59 @@
         }
         //check the length and max valu of the inputs 
 
-        var ingredientString = ingredietName + " | " + amount +"g" //could be millileters
+        addIngredientToForm(ingredietName,amount)
+
+
+    })
+
+    addStepButton.addEventListener("click",(event)=> {
+        //get the value 
+        var stepText = stepInput.value
+        if(stepText == ""){
+            displayMessage("Step must not be blank")
+            return
+        }
+        appendStepToForm(stepText)
+
+    })
+
+    function appendStepToForm(stepText){
+
+        //div for the input and button to go into
+        var inputDiv = document.createElement("div");
+        inputDiv.setAttribute("id","stepWrapper");
+
+        var stepInput = document.createElement("input");
+
+        stepInput.setAttribute("type","text");
+        stepInput.setAttribute("name","step");
+        
+        //stepInput.setAttribute("id","formStep");
+        stepInput.classList.add("formStep")
+        //this is used by the get step by element function 
+        //to grab updated steps before sending them 
+        //stepInput.setAttribute("class","formStep");
+
+        stepInput.setAttribute("value",stepText);
+
+        var removeButton = document.createElement("input");
+        removeButton.setAttribute("type","button");
+        removeButton.setAttribute("value","X");
+        // removeButton.setAttribute("onclick","removeStep()")
+        removeButton.addEventListener('click',(event)=>{
+            event.preventDefault()
+            event.target.parentElement.remove()
+        });
+        //add input to div
+        inputDiv.appendChild(stepInput);
+        inputDiv.appendChild(removeButton);
+        //add to the form 
+        formSteps.appendChild(inputDiv);
+
+    }
+
+    function addIngredientToForm(ingredient,amount){
+        var ingredientString = ingredient + " | " + amount +"g" //could be millileters
 
         var ingredientWrapper = document.createElement("div")
         ingredientWrapper.classList.add("ingredient-wrapper")
@@ -106,14 +159,12 @@
             //FOR SOME REASON THIS IS FIRING WHEN the enter key is pressed in the name input ????
         removeIngredientButton.addEventListener("click",(event) =>{
             event.preventDefault()
-            console.log(event)
-            console.log("parent element id = ",event.target.parentElement.id)
             event.target.parentElement.remove()
         })
 
         formIngredients.appendChild(ingredientWrapper)
+    }
 
-    })
     
     function displayMessage(messagetext,timeout = 3000){
         displayWarning(messagetext);

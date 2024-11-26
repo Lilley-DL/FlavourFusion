@@ -275,7 +275,7 @@ def recipeBuilder():
     return render_template("recipeBuilder.html")
 
 #this is going to be the new version of the recipe builder2
-@app.route("/altbuilder")
+@app.route("/altbuilder",methods=['GET','POST'])
 @flask_login.login_required
 def altbuilder():
 
@@ -285,6 +285,9 @@ def altbuilder():
         currentUser = flask_login.current_user
 
     if request.method == "POST":
+
+        app.logger.info(f"ALT BUILDER FORM {request.form}")
+
         return render_template("altRecipeBuilder.html")
         
 
