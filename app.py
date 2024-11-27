@@ -280,15 +280,34 @@ def recipeBuilder():
 def altbuilder():
 
     currentUser = None
-
+    recipeMacros = []
     if flask_login.current_user.is_authenticated:
         currentUser = flask_login.current_user
 
     if request.method == "POST":
+        #TODO: sanitise the inputs
+        #TODO: truncate the macro and ingredient amount inputs to 2 decmal places 
 
-        app.logger.info(f"ALT BUILDER FORM {request.form}")
+        
+        ingredients = request.form.getlist('ingredient')
+        steps = request.form.getlist('step')
+        #macro info
+        calories = request.form.get('calories')
+        protein = request.form.get('protein')
+        fats = request.form.get('fats')
+        carbs = request.form.get('carbs')
+        fibre = request.form.get('fibre')
+        recipeMacros.append(calories)
+        recipeMacros.append(protein)
+        recipeMacros.append(fats)
+        recipeMacros.append(carbs)
+        recipeMacros.append(fibre)
 
-        return render_template("altRecipeBuilder.html")
+
+
+        app.logger.info(f"ALT BUILDER macros {recipeMacros}")
+
+        return redirect(url_for('altbuilder'))
         
 
     return render_template("altRecipeBuilder.html")

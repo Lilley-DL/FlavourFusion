@@ -26,21 +26,29 @@
     <button id="addStepButton">Add</button>
     <br>
     <br>
-    <form action="{{url_for('altbuilder')}}" method="post" id="recipe-form">
-        <input type="hidden" id="caloriesHidden" name="calories">
-        <input type="hidden" id="proteinHidden" name="protein">
-        <input type="hidden" id="fatsHidden" name="fats">
-        <input type="hidden" id="carbsHidden" name="carbs">
-        <input type="hidden" id="fibreHidden" name="fibre">
-
+    <form action="{{url_for('altbuilder')}}" method="post" id="recipe-form" >
+        <div id="macroWrapper">
+            <span id="macroHeader">Recipe macros:</span>
+            <br>
+            <label for="calories">Kcal:</label>
+            <input class="macroInput" type="number" id="caloriesInput" name="calories" min="0" step="0.01" >
+            <label for="protein">Protein:</label>
+            <input class="macroInput" type="number" id="proteinInput" name="protein" min="0" step="0.01">
+            <label for="fats">Fat:</label>
+            <input class="macroInput" type="number" id="fatsInput" name="fats" min="0" step="0.01">
+            <label for="carbs">Carbs:</label>
+            <input class="macroInput" type="number" id="carbsInput" name="carbs" min="0" step="0.01">
+            <label for="fibre">Fibre:</label>
+            <input class="macroInput" type="number" id="fibreInput" name="fibre" min="0" step="0.01">
+        </div>
+        
+        <hr>
 
         <label for="">Ingredients:</label>
         <div id="formIngredients">
 
         </div>
-
-
-
+        <hr>
         <label for="">Steps:</label>
         <div id="formSteps">
 
@@ -71,9 +79,16 @@
     var formSteps = document.getElementById("formSteps")
     var nameInput = document.getElementById("recipeNameInput")
 
+    var calInput = document.getElementById("caloriesInput")
 
     var ingredientCount = 0
     var stepCount = 0
+
+    var reciepObject = {}
+    var ingredientsList = []
+    var stepsList = []
+    //check that the input isnt greater than 2 decimal points
+
 
     //check that there are some ingredients and recipes in the form before submitting 
     recipeForm.addEventListener("submit",(event)=>{
@@ -88,7 +103,14 @@
         }
 
         //process form 
+        //loop through ingredients 
+        let elements = document.getElementsByClassName("ingredient-value")
+        for(input of elements){
+            ingredientsList.push(input.value)
+        }
+        console.log("ingredien list ",ingredientsList)
 
+        event.preventDefault()
     })
 
     addIngredientButton.addEventListener("click",(event) =>{
@@ -188,6 +210,22 @@
         ingredientCount++;
     }
 
+    function limitDecimalInput(){
+        console.log("INPUT EVEN DECIMAL  ", event.target.value)
+        let parsed = Number(event.target.value).toFixed(2);
+        event.target.value = parsed
+    }
+
+    function checkDecimalInput(){
+        const regex = /^\d*(\.\d{3,})+?$/;
+        let parsed = event.target.value
+        if(regex.test(parsed)){
+            console.log("too many poiunts")
+        }else{
+            event.preventDefault()
+        }
+
+    }
     
     function displayMessage(messagetext,timeout = 3000){
         displayWarning(messagetext);
