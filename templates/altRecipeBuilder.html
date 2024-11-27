@@ -72,6 +72,25 @@
     var nameInput = document.getElementById("recipeNameInput")
 
 
+    var ingredientCount = 0
+    var stepCount = 0
+
+    //check that there are some ingredients and recipes in the form before submitting 
+    recipeForm.addEventListener("submit",(event)=>{
+        if(ingredientCount <3){
+            event.preventDefault()
+            displayMessage("There must be more than 2 ingredients in a recipe")
+        }
+
+        if(stepCount < 3){
+            event.preventDefault()
+            displayMessage("There must be more than 2 steps to a recipe")
+        }
+
+        //process form 
+
+    })
+
     addIngredientButton.addEventListener("click",(event) =>{
         //get the ingredient name and amount 
         var ingredietName = ingredientInput.value
@@ -127,12 +146,14 @@
         removeButton.addEventListener('click',(event)=>{
             event.preventDefault()
             event.target.parentElement.remove()
+            stepCount--
         });
         //add input to div
         inputDiv.appendChild(stepInput);
         inputDiv.appendChild(removeButton);
         //add to the form 
         formSteps.appendChild(inputDiv);
+        stepCount++
 
     }
 
@@ -160,9 +181,11 @@
         removeIngredientButton.addEventListener("click",(event) =>{
             event.preventDefault()
             event.target.parentElement.remove()
+            ingredientCount--
         })
 
         formIngredients.appendChild(ingredientWrapper)
+        ingredientCount++;
     }
 
     
