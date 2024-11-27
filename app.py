@@ -280,32 +280,58 @@ def recipeBuilder():
 def altbuilder():
 
     currentUser = None
-    recipeMacros = []
+
     if flask_login.current_user.is_authenticated:
         currentUser = flask_login.current_user
 
     if request.method == "POST":
         #TODO: sanitise the inputs
         #TODO: truncate the macro and ingredient amount inputs to 2 decmal places 
-
+        recipeMacros = {
+            "calories":None,
+            "protein":None,
+            "fats":None,
+            "carbs":None,
+            "fibre":None
+        }
         
         ingredients = request.form.getlist('ingredient')
         steps = request.form.getlist('step')
+        name = request.form.get('recipeName')
         #macro info
         calories = request.form.get('calories')
         protein = request.form.get('protein')
         fats = request.form.get('fats')
         carbs = request.form.get('carbs')
         fibre = request.form.get('fibre')
-        recipeMacros.append(calories)
-        recipeMacros.append(protein)
-        recipeMacros.append(fats)
-        recipeMacros.append(carbs)
-        recipeMacros.append(fibre)
+        
+        recipeMacros["calories"] = calories
+        recipeMacros["protein"] = protein
+        recipeMacros['fats'] = fats
+        recipeMacros['carbs'] = carbs
+        recipeMacros['fibre'] = fibre
 
+        #the recipe object 
+        recipeObject = {
+            "name":name,
+            "macros":recipeMacros,
+            "ingredients":ingredients,
+            "steps":steps
+        }
 
+        sql = """INSERT INTO public.recipe(
+	                recipe_name, recipe_data,author_id)
+	                VALUES (%s,%s,%s)"""
+        values = (name,json.dumps(recipeObject),currentUser.id)
+        result, message = db.insert(sql,values)
 
-        app.logger.info(f"ALT BUILDER macros {recipeMacros}")
+        if result:
+            flash("recipe saved")
+        else:
+            flash(f"Recipe not saved -- {message}")
+
+        #app.logger.info(f"ALT BUILDER macros {request.form}")
+        app.logger.info(f"Recipe object {recipeObject}")
 
         return redirect(url_for('altbuilder'))
         
