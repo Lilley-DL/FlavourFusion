@@ -370,6 +370,51 @@ def edit(recipe_id):
     if request.method == 'POST':
         #process the edit 
         #use the id on the route to edit the correct recipe 
+        recipeMacros = {
+            "calories":None,
+            "protein":None,
+            "fats":None,
+            "carbs":None,
+            "fibre":None
+        }
+        
+        ingredients = request.form.getlist('ingredient')
+        steps = request.form.getlist('step')
+        name = request.form.get('recipeName')
+        #macro info
+        calories = request.form.get('calories')
+        protein = request.form.get('protein')
+        fats = request.form.get('fats')
+        carbs = request.form.get('carbs')
+        fibre = request.form.get('fibre')
+        
+        recipeMacros["calories"] = calories
+        recipeMacros["protein"] = protein
+        recipeMacros['fats'] = fats
+        recipeMacros['carbs'] = carbs
+        recipeMacros['fibre'] = fibre
+
+        #the recipe object 
+        recipeObject = {
+            "name":name,
+            "macros":recipeMacros,
+            "ingredients":ingredients,
+            "steps":steps
+        }
+
+        sql = """UPDATE public.recipe
+	        SET recipe_name=%s, recipe_data=%s, updated_at= NOW()
+	        WHERE recipe_id = %s"""
+        values = (name,json.dumps(recipeObject),recipe_id)
+        result, message = db.insert(sql,values)
+
+        if result:
+            flash("recipe saved")
+        else:
+            flash(f"Recipe not saved -- {message}")
+
+        #app.logger.info(f"ALT BUILDER macros {request.form}")
+        app.logger.info(f"Recipe object {recipeObject}")
 
         #flash a message ? 
         return redirect(url_for('profile'))
