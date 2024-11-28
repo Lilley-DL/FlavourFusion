@@ -13,6 +13,17 @@ class RecipeManager:
             return recipe
         else:
             return False
+        
+    def getRecipeForEdit(self,recipe_id,author_id):
+        sql = "select * from recipe where recipe_id = %s and author_id = %s"
+        values = (recipe_id,author_id)
+        result,row = self.db.getSingle(sql,values)
+        if result:
+            recipe = Recipe(row)
+            return recipe
+        else:
+            return False
+
     
     def getRecipeByName(self, name:str):
         #check the input is a string

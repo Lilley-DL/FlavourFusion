@@ -13,6 +13,15 @@
     
 {% endif %}
 
+<div id="usersRecipes">
+<h3>Your recipes</h3>
+    {% if userRecipes %}
+        {% for recipe in userRecipes %}
+            <a href="edit/{{recipe['recipe_id']}}">{{recipe['recipe_name']}}</a>
+            
+        {% endfor %}
+    {% endif %}
+</div>
 
 
 {% endblock  %}

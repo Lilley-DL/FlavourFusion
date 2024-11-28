@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% block title %}
+    Edit recipe
+{% endblock title %}
+
+{% if errors %}
+    {{errors}}
+{% endif %}
+
+{% block content %}
+
+<div id="warning-message-wrapper">
+    <span id="warningsSpan"></span>
+</div>
+    <h3>Recipe builder </h3>
+
+    <label for="ingredientName">Add Ingredient:</label>
+    <input type="text" name="ingredientName" id="ingredientName">
+    <input type="number" name="ingredientAmount" id="ingredientAmount" placeholder="g/ml">
+    <button id="addIngredientButton">Add</button>
+    <br>
+    <br>
+    
+    <label for="steps">Steps:</label>
+    <input type="text" name="step" id="stepInput">
+    <button id="addStepButton">Add</button>
+    <br>
+    <br>
+    <form action="/edit/{{recipe_id}}" method="post" id="recipe-form" >
+        <div id="macroWrapper">
+            <span id="macroHeader">Recipe macros:</span>
+            <br>
+            <label for="calories">Kcal:</label>
+            <input class="macroInput" type="number" id="caloriesInput" name="calories" min="0" step="0.01" >
+            <label for="protein">Protein:</label>
+            <input class="macroInput" type="number" id="proteinInput" name="protein" min="0" step="0.01">
+            <label for="fats">Fat:</label>
+            <input class="macroInput" type="number" id="fatsInput" name="fats" min="0" step="0.01">
+            <label for="carbs">Carbs:</label>
+            <input class="macroInput" type="number" id="carbsInput" name="carbs" min="0" step="0.01">
+            <label for="fibre">Fibre:</label>
+            <input class="macroInput" type="number" id="fibreInput" name="fibre" min="0" step="0.01">
+        </div>
+        
+        <hr>
+
+        <label for="">Ingredients:</label>
+        <div id="formIngredients">
+
+        </div>
+        <hr>
+        <label for="">Steps:</label>
+        <div id="formSteps">
+
+        </div>
+        <br>
+        <label for="recipeName">Recipe name:</label>
+        <input type="text" name="recipeName" id="recipeNameInput" required>
+        <input type="submit" value="Save">
+    </form>
+
+{% endblock  %}
+
+{% block scripts %}
+<script>
+    
+    '{% if recipeData %}'
+        
+        var originaleRecipeObject = '{{recipeData["recipe_data"]|tojson}}'
+        var reciepObject = JSON.parse(originaleRecipeObject)
+
+        window.addEventListener("load",(event)=>{
+            //populate the ingredients, steps, and macros
+            buildRecipe(reciepObject)
+        })
+
+
+    '{% endif %}'
+
+    
+
+    var warningBox = document.getElementById("warningsSpan");
+
+    var ingredientInput = document.getElementById("ingredientName")
+    var ingredientAmount = document.getElementById("ingredientAmount")
+    var stepInput = document.getElementById("stepInput")
+
+    var addIngredientButton = document.getElementById("addIngredientButton")
+    var addStepButton = document.getElementById("addStepButton")
+
+    var recipeForm = document.getElementById("recipe-form")
+
+    var formIngredients = document.getElementById("formIngredients")
+    var formSteps = document.getElementById("formSteps")
+    var nameInput = document.getElementById("recipeNameInput")
+
+    var calInput = document.getElementById("caloriesInput")
+
+    var ingredientCount = 0
+    var stepCount = 0
+
+    //var reciepObject = {}
+    var ingredientsList = []
+    var stepsList = []
+    //check that the input isnt greater than 2 decimal points
+
+    function buildRecipe(ogRecipe){
+        let ingredients = ogRecipe.ingredients
+        let steps = ogRecipe.steps
+        let macros = ogRecipe.macros
+        let name = ogRecipe.name
+
+        console.log("REBUILD TEST :",name,ingredients,steps,macros)
+        //add ingredients to form 
+        for(ingredient of ingredients){
+            let split = ingredient.split("|")
+            addIngredientToForm(split[0],split[1])
+        }
+
+        //add the steps
+        for(step of steps){
+            appendStepToForm(step)
+        }
+
+        //add name
+        nameInput.value = name
+
+        //macros
+        document.getElementById("caloriesInput").value = macros.calories
+        document.getElementById("proteinInput").value = macros.protein
+        document.getElementById("fatsInput").value = macros.fats
+        document.getElementById("carbsInput").value = macros.carbs
+        document.getElementById("fibreInput").value = macros.fibre
+
+    }
+
+    //check that there are some ingredients and recipes in the form before submitting 
+    recipeForm.addEventListener("submit",(event)=>{
+        if(ingredientCount <3){
+            event.preventDefault()
+            displayMessage("There must be more than 2 ingredients in a recipe")
+        }
+
+        if(stepCount < 3){
+            event.preventDefault()
+            displayMessage("There must be more than 2 steps to a recipe")
+        }
+
+        //dont think i need the below code anymore ?
+        //process form 
+        //loop through ingredients 
+        let elements = document.getElementsByClassName("ingredient-value")
+        for(input of elements){
+            ingredientsList.push(input.value)
+        }
+        console.log("ingredien list ",ingredientsList)
+
+    })
+
+    addIngredientButton.addEventListener("click",(event) =>{
+        //get the ingredient name and amount 
+        var ingredietName = ingredientInput.value
+        var amount = ingredientAmount.value
+
+        //check the content of the inputs 
+        if(ingredietName == "" || amount == ""){
+            //show the error 
+            displayMessage("ingrdient values must be present")
+            return
+        }
+        //check the length and max valu of the inputs 
+
+        addIngredientToForm(ingredietName,amount)
+
+
+    })
+
+    addStepButton.addEventListener("click",(event)=> {
+        //get the value 
+        var stepText = stepInput.value
+        if(stepText == ""){
+            displayMessage("Step must not be blank")
+            return
+        }
+        appendStepToForm(stepText)
+
+    })
+
+    function appendStepToForm(stepText){
+
+        //div for the input and button to go into
+        var inputDiv = document.createElement("div");
+        inputDiv.setAttribute("id","stepWrapper");
+
+        var stepInput = document.createElement("input");
+
+        stepInput.setAttribute("type","text");
+        stepInput.setAttribute("name","step");
+        
+        //stepInput.setAttribute("id","formStep");
+        stepInput.classList.add("formStep")
+        //this is used by the get step by element function 
+        //to grab updated steps before sending them 
+        //stepInput.setAttribute("class","formStep");
+
+        stepInput.setAttribute("value",stepText);
+
+        var removeButton = document.createElement("input");
+        removeButton.setAttribute("type","button");
+        removeButton.setAttribute("value","X");
+        // removeButton.setAttribute("onclick","removeStep()")
+        removeButton.addEventListener('click',(event)=>{
+            event.preventDefault()
+            event.target.parentElement.remove()
+            stepCount--
+        });
+        //add input to div
+        inputDiv.appendChild(stepInput);
+        inputDiv.appendChild(removeButton);
+        //add to the form 
+        formSteps.appendChild(inputDiv);
+        stepCount++
+
+    }
+
+    function addIngredientToForm(ingredient,amount){
+        var ingredientString = ingredient + " | " + amount +"g" //could be millileters
+
+        var ingredientWrapper = document.createElement("div")
+        ingredientWrapper.classList.add("ingredient-wrapper")
+
+        var ingredientInputNode = document.createElement("input")
+        ingredientInputNode.type = "text"
+        ingredientInputNode.classList.add("ingredient-value")
+        ingredientInputNode.value = ingredientString
+        ingredientInputNode.readOnly = true
+        ingredientInputNode.name = "ingredient"
+
+        let removeIngredientButton = document.createElement("button")
+        removeIngredientButton.innerHTML = "X"
+        //add input and remove button to wrapper 
+        //ingredientWrapper.appendChild(hiddenIngredietnNode)
+        ingredientWrapper.appendChild(ingredientInputNode)
+        ingredientWrapper.appendChild(removeIngredientButton)
+
+            //FOR SOME REASON THIS IS FIRING WHEN the enter key is pressed in the name input ????
+        removeIngredientButton.addEventListener("click",(event) =>{
+            event.preventDefault()
+            event.target.parentElement.remove()
+            ingredientCount--
+        })
+
+        formIngredients.appendChild(ingredientWrapper)
+        ingredientCount++;
+    }
+
+    function limitDecimalInput(){
+        console.log("INPUT EVEN DECIMAL  ", event.target.value)
+        let parsed = Number(event.target.value).toFixed(2);
+        event.target.value = parsed
+    }
+
+    function checkDecimalInput(){
+        const regex = /^\d*(\.\d{3,})+?$/;
+        let parsed = event.target.value
+        if(regex.test(parsed)){
+            console.log("too many poiunts")
+        }else{
+            event.preventDefault()
+        }
+
+    }
+    
+    function displayMessage(messagetext,timeout = 3000){
+        displayWarning(messagetext);
+        //set timeout for it to clear 
+        setTimeout(clearWarning,timeout);
+    }
+
+     function displayWarning(warningText){
+        warningBox.innerText = " >>" +warningText+"<< ";
+    }
+
+    function clearWarning(){
+        warningBox.innerText = "";
+    }
+    //implament reset all 
+
+</script>
+    
+{% endblock scripts %}

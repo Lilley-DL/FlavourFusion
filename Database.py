@@ -56,6 +56,26 @@ class Database:
             return True,rows
         except (Exception, psycopg2.Error) as error:
             return False, str(error)
+        
+        
+    def getSingle(self,query:str,values:tuple = None):
+        conn = self.getConnection()
+        cur = conn.cursor()
+        try:
+            if values:
+                cur.execute(query,values)
+                rows = cur.fetchone()
+            else:
+                cur.execute(query)
+                rows = cur.fetchone()
+
+            #close DB conection 
+            conn.commit()
+            cur.close()
+            conn.close()
+            return True,rows
+        except (Exception, psycopg2.Error) as error:
+            return False, str(error)
 
 
 def get_db_connection(DATABASE_URL):

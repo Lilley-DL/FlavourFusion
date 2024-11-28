@@ -211,7 +211,16 @@ def profile():
     if flask_login.current_user.is_authenticated:
         currentUser = flask_login.current_user
 
-    return render_template("profile.html",user=currentUser)
+    userRecipes = None
+    ##get the recipes
+    sql = "select recipe_name,recipe_id from recipe where author_id = %s"
+    values = (currentUser.id,)
+    result,rows = db.get(sql,values)
+    app.logger.info(f"User recipes = {rows}")
+    if result:
+        userRecipes = rows
+    
+    return render_template("profile.html",user=currentUser,userRecipes = userRecipes)
 
 
 @app.route("/recipes",methods=['GET'])
@@ -337,6 +346,36 @@ def altbuilder():
         
 
     return render_template("altRecipeBuilder.html")
+
+#could i use the id of the recipe here or should i save that for just viewing recipes ?
+@app.route("/edit/<recipe_id>",methods=['GET','POST'])
+@flask_login.login_required
+def edit(recipe_id):
+    currentUser = None
+
+    if flask_login.current_user.is_authenticated:
+        currentUser = flask_login.current_user
+    if request.method == 'GET':
+        #get the id of current user and check it against the recipe 
+        sql = "select recipe_data from recipe where recipe_id = %s and author_id = %s"
+        values = (recipe_id,currentUser.id)
+        result,row = db.getSingle(sql,values)
+        if result:
+            app.logger.info(f"Recipe ROW = {row}")
+            return render_template("editRecipe.html",recipeData = row,recipe_id=recipe_id)
+        else:
+            flash(f"something went wrong :: {row}")
+            return render_template("editRecipe.html")
+    
+    if request.method == 'POST':
+        #process the edit 
+        #use the id on the route to edit the correct recipe 
+
+        #flash a message ? 
+        return redirect(url_for('profile'))
+            
+
+
 
 
 #ingredients stuff
