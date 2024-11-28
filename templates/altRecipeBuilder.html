@@ -26,7 +26,7 @@
     <button id="addStepButton">Add</button>
     <br>
     <br>
-    <form action="{{url_for('altbuilder')}}" method="post" id="recipe-form" >
+    <form action="{{url_for('altbuilder')}}" method="post" id="recipe-form" enctype="multipart/form-data">
         <div id="macroWrapper">
             <span id="macroHeader">Recipe macros:</span>
             <br>
@@ -179,7 +179,7 @@
     }
 
     function addIngredientToForm(ingredient,amount){
-        var ingredientString = ingredient + " | " + amount +"g" //could be millileters
+        var ingredientString = ingredient.trim() + " | " + amount +"g" //could be millileters
 
         var ingredientWrapper = document.createElement("div")
         ingredientWrapper.classList.add("ingredient-wrapper")
@@ -193,10 +193,15 @@
 
         let removeIngredientButton = document.createElement("button")
         removeIngredientButton.innerHTML = "X"
-        //add input and remove button to wrapper 
-        //ingredientWrapper.appendChild(hiddenIngredietnNode)
+
+        let imageInput = document.createElement("input")
+        imageInput.type = "file"
+        imageInput.name = ingredient.trim() + "_Image"
+        imageInput.accept = "image/png, image/jpeg"
+
         ingredientWrapper.appendChild(ingredientInputNode)
         ingredientWrapper.appendChild(removeIngredientButton)
+        ingredientWrapper.appendChild(imageInput)
 
             //FOR SOME REASON THIS IS FIRING WHEN the enter key is pressed in the name input ????
         removeIngredientButton.addEventListener("click",(event) =>{
