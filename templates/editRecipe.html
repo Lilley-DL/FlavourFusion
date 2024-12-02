@@ -59,6 +59,10 @@
         <input type="submit" value="Save">
     </form>
 
+    <div id="images">
+
+    </div>
+
 {% endblock  %}
 
 {% block scripts %}
@@ -109,12 +113,30 @@
         let steps = ogRecipe.steps
         let macros = ogRecipe.macros
         let name = ogRecipe.name
+        let ingredientImages = ogRecipe.ingredientImages
 
-        console.log("REBUILD TEST :",name,ingredients,steps,macros)
+        console.log("REBUILD TEST :",name,ingredients,steps,macros,ingredientImages)
         //add ingredients to form 
+        let index = 0;
         for(ingredient of ingredients){
             let split = ingredient.split("|")
             addIngredientToForm(split[0],split[1])
+            if(ingredientImages){
+
+                for(ingimage of ingredientImages ){
+                    if(ingimage.ingredient_index == index){
+                        console.log("ingimage = ",ingimage,"Ingredient = ",split)
+                        let baseURL = window.location.origin
+                        let path = baseURL+'/{{ingredientImagesurl}}'+ingimage.image_path
+                        console.log("test path ::", path)
+                        addImage(document.getElementById("images"),path)
+                        break
+                    }
+                }
+            }
+              
+          
+            index++
         }
 
         //add the steps
@@ -185,6 +207,14 @@
         appendStepToForm(stepText)
 
     })
+
+    function addImage(parent,path){
+        let newImage = document.createElement("img")
+        newImage.src = path
+        //newImage.width = "200"
+        newImage.height = "200"
+        parent.appendChild(newImage)
+    }
 
     function appendStepToForm(stepText){
 

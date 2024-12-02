@@ -11,11 +11,11 @@ from werkzeug.utils import secure_filename
 
 from Database import get_db_connection,Database
 
-ingredientImagePath = "uploads\ingredientImages"
+ingredientImagePath = "static\\uploads\\ingredientImages"
 
 allowedExtensions = {'jpeg','jpg','png'}
 
-app = Flask(__name__)
+app = Flask(__name__,static_folder='static')
 app.config['SECRET_KEY'] = os.environ.get('CSRF_SECRET_KEY')
 
 login_manager = flask_login.LoginManager()
@@ -317,13 +317,11 @@ def altbuilder():
         ingredients = request.form.getlist('ingredient')
         steps = request.form.getlist('step')
         name = request.form.get('recipeName')
-
-
+        
         #get the images 
         ingredientImages = []
         files = request.files
-        for image in files:
-            app.logger.info(f"IMAGE INFO :: name= {image} file={files[image].filename}")
+        for index,image in enumerate(files):
             if files[image].filename != '':
                 app.logger.info(f"IMAGE INFO :: name= {image} file={files[image].filename}")
                 file = files[image]
@@ -333,7 +331,13 @@ def altbuilder():
                     newFileName = fileuuid+'.'+extension
                     #= secure_filename(file.filename)#this needs to be a uuid
                     # store the image with the ingredient in JSON ?
-                    file.save(os.path.join(ingredientImagePath,newFileName))
+                    #check the ingredient is in the ingredients list 
+                    #save the path with the ingredient 
+                    newPath = os.path.join(ingredientImagePath,newFileName)
+                    file.save(newPath)
+                    app.logger.info(f"index = {index}, name = {image}")
+                    
+                    ingredientImages.append({"ingredient_index":index,"image_path":newFileName})
                     
         #macro info
         calories = request.form.get('calories')
@@ -363,7 +367,8 @@ def altbuilder():
             "name":name,
             "macros":recipeMacros,
             "ingredients":ingredients,
-            "steps":steps
+            "steps":steps,
+            "ingredientImages":ingredientImages
         }
 
         sql = """INSERT INTO public.recipe(
@@ -377,9 +382,7 @@ def altbuilder():
         else:
             flash(f"Recipe not saved -- {message}")
 
-        #app.logger.info(f"ALT BUILDER macros {request.form}")
-        app.logger.info(f"Request files =  {request.files}")
-        app.logger.info(f"Request object =  {request.form}")
+        app.logger.info(f"Recipe ingredients =  {recipeObject['ingredients']}")
 
         return redirect(url_for('altbuilder'))
         
@@ -401,7 +404,8 @@ def edit(recipe_id):
         result,row = db.getSingle(sql,values)
         if result:
             app.logger.info(f"Recipe ROW = {row}")
-            return render_template("editRecipe.html",recipeData = row,recipe_id=recipe_id)
+            ingredientImagesUrl = "static/uploads/ingredientImages/" 
+            return render_template("editRecipe.html",recipeData = row,recipe_id=recipe_id,ingredientImagesurl=ingredientImagesUrl)
         else:
             flash(f"something went wrong :: {row}")
             return render_template("editRecipe.html")
