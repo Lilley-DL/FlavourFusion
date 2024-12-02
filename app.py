@@ -7,8 +7,13 @@ import flask_login
 from dotenv import load_dotenv
 import csv , json, os, hashlib, binascii, html
 
+from werkzeug.utils import secure_filename
+
 from Database import get_db_connection,Database
 
+ingredientImagePath = "uploads\ingredientImages"
+
+allowedExtensions = {'jpeg','jpg','png'}
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('CSRF_SECRET_KEY')
@@ -38,6 +43,11 @@ class LoginForm(FlaskForm):
     email = EmailField('Email: ',validators=[DataRequired()])
     password = PasswordField('Password: ',validators=[DataRequired()])
     submit = SubmitField("Submit")
+
+##image uploading 
+def allowedFile(filename):
+    return '.' in filename and filename.rsplit('.',1)[1].lower() in allowedExtensions
+
 
 ##USER MANAGEMENT
 class User(flask_login.UserMixin):
@@ -307,6 +317,21 @@ def altbuilder():
         ingredients = request.form.getlist('ingredient')
         steps = request.form.getlist('step')
         name = request.form.get('recipeName')
+
+
+        #get the images 
+        ingredientImages = []
+        files = request.files
+        for image in files:
+            app.logger.info(f"IMAGE INFO :: name= {image} file={files[image].filename}")
+            if files[image].filename != '':
+                app.logger.info(f"IMAGE INFO :: name= {image} file={files[image].filename}")
+                file = files[image]
+                if allowedFile(file.filename):
+                    filename = secure_filename(file.filename)#this needs to be a uuid
+                    # store the image with the ingredient in JSON ?
+                    file.save(os.path.join(ingredientImagePath,filename))
+                    
         #macro info
         calories = request.form.get('calories')
         protein = request.form.get('protein')
