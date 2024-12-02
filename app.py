@@ -5,7 +5,7 @@ from wtforms import StringField,EmailField,SubmitField,PasswordField
 from wtforms.validators import DataRequired,Email
 import flask_login
 from dotenv import load_dotenv
-import csv , json, os, hashlib, binascii, html
+import csv , json, os, hashlib, binascii, html, uuid
 
 from werkzeug.utils import secure_filename
 
@@ -328,9 +328,12 @@ def altbuilder():
                 app.logger.info(f"IMAGE INFO :: name= {image} file={files[image].filename}")
                 file = files[image]
                 if allowedFile(file.filename):
-                    filename = secure_filename(file.filename)#this needs to be a uuid
+                    fileuuid = str(uuid.uuid4())
+                    filename,extension = file.filename.split('.')
+                    newFileName = fileuuid+'.'+extension
+                    #= secure_filename(file.filename)#this needs to be a uuid
                     # store the image with the ingredient in JSON ?
-                    file.save(os.path.join(ingredientImagePath,filename))
+                    file.save(os.path.join(ingredientImagePath,newFileName))
                     
         #macro info
         calories = request.form.get('calories')
