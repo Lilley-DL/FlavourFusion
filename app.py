@@ -319,7 +319,17 @@ def altbuilder():
         recipeMacros['fats'] = fats
         recipeMacros['carbs'] = carbs
         recipeMacros['fibre'] = fibre
+        
         #get the filenames for the images 
+        #check the mime type
+
+        # generate a uuid for the new name 
+        #create the path using new name 
+        # store the file at that path
+        #name format !ingredient_number_uuid.jpg ?
+        # store the path in the JSON for the ingredients images 
+
+
         #the recipe object 
         recipeObject = {
             "name":name,
@@ -340,7 +350,8 @@ def altbuilder():
             flash(f"Recipe not saved -- {message}")
 
         #app.logger.info(f"ALT BUILDER macros {request.form}")
-        app.logger.info(f"Request =  {request.files}")
+        app.logger.info(f"Request files =  {request.files}")
+        app.logger.info(f"Request object =  {request.form}")
 
         return redirect(url_for('altbuilder'))
         

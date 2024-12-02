@@ -194,9 +194,12 @@
         let removeIngredientButton = document.createElement("button")
         removeIngredientButton.innerHTML = "X"
 
+        let imageInputName = ingredient.replace(/\s/g,'_') +"_image"
+        //console.log("ingredientcount image name = ",imageInputName)
         let imageInput = document.createElement("input")
         imageInput.type = "file"
-        imageInput.name = ingredient.trim() + "_Image"
+        //imageInput.name = ingredient.trim() + "_Image"
+        imageInput.name = imageInputName
         imageInput.accept = "image/png, image/jpeg"
 
         ingredientWrapper.appendChild(ingredientInputNode)
